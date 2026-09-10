@@ -1,0 +1,1831 @@
+<!doctype html>
+<html lang="en" data-display="court-app">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23171918'/%3E%3Cpath d='M7 10h18v3H7zm0 9h18v3H7z' fill='%23d9483b'/%3E%3C/svg%3E">
+  <title>Royal Court / 60-second challenge</title>
+  <style>
+    :root {
+      --bg: #fdfdfb;
+      --panel: #ffffff;
+      --ink: #171918;
+      --ink-2: #414644;
+      --muted: #737b77;
+      --line: #dfe5e2;
+      --line-strong: #aebbb5;
+      --path: #1e5d50;
+      --path-faint: #d6e2dd;
+      --accent: #d9483b;
+      --solved: #188763;
+      --solved-soft: #eef9f5;
+      --royal: #8b6428;
+      --royal-soft: #f8f1e3;
+      --focus: #1d4ed8;
+      --mono: "Space Mono", "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+      --sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { min-width: 320px; background: var(--bg); }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background-color: var(--bg);
+      font-family: var(--sans);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, input { font: inherit; }
+
+    button { color: inherit; }
+
+    .page {
+      width: min(100%, 1440px);
+      margin: 0 auto;
+      min-height: 100svh;
+      padding: 0 clamp(18px, 4vw, 62px) 48px;
+    }
+
+    .masthead {
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand,
+    .issue,
+    .eyebrow,
+    .node-kicker,
+    .puzzle-tag,
+    .rule-label,
+    .legend,
+    .status,
+    .tab-number,
+    .tab-kind,
+    .progress-label,
+    .control {
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: .18em;
+    }
+
+    .brand { font-weight: 800; font-size: 13px; }
+    .brand span { color: var(--accent); }
+    .issue { color: var(--muted); font-size: 10px; }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(260px, .65fr);
+      align-items: end;
+      gap: clamp(44px, 8vw, 120px);
+      padding: clamp(52px, 8vw, 104px) 0 clamp(46px, 7vw, 84px);
+    }
+
+    .eyebrow {
+      margin-bottom: 18px;
+      color: var(--path);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    h1 {
+      max-width: 820px;
+      margin: 0;
+      font: 800 clamp(42px, 7.6vw, 102px)/.94 var(--mono);
+      letter-spacing: -.075em;
+    }
+
+    .hero-copy {
+      max-width: 460px;
+      margin: 25px 0 0;
+      color: var(--ink-2);
+      font-size: clamp(16px, 2vw, 20px);
+      line-height: 1.55;
+    }
+
+    .rule {
+      padding-top: 18px;
+      border-top: 2px solid var(--ink);
+    }
+
+    .rule-label {
+      margin-bottom: 13px;
+      color: var(--accent);
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .rule p {
+      margin: 0;
+      color: var(--ink-2);
+      font-size: 15px;
+      line-height: 1.65;
+    }
+
+    .rule strong { color: var(--ink); }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 22px;
+      margin-top: 26px;
+      color: var(--muted);
+      font-size: 9px;
+      letter-spacing: .12em;
+    }
+
+    .legend-item { display: inline-flex; align-items: center; gap: 8px; }
+
+    .legend-mark {
+      width: 18px;
+      height: 10px;
+      border: 1px solid var(--line-strong);
+      background: var(--panel);
+    }
+
+    .legend-mark.path { border-color: var(--path); }
+    .legend-mark.solved { border-color: var(--solved); background: var(--solved); }
+
+    .tabs-wrap {
+      position: relative;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      gap: 6px;
+      padding: 6px;
+      scrollbar-width: thin;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .tab {
+      flex: 1 1 120px;
+      min-width: 110px;
+      min-height: 80px;
+      padding: 12px 14px;
+      border: 0;
+      border-radius: 12px;
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+      transition: background-color 160ms ease, color 160ms ease;
+    }
+
+    .tab:hover { background: color-mix(in srgb, var(--path) 6%, var(--bg)); }
+    .tab[aria-selected="true"] { color: #fff; background: var(--ink); }
+    .tab.is-solved .tab-number { color: var(--solved); font-weight: 800; }
+
+    .tab-number {
+      display: block;
+      margin-bottom: 9px;
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    .tab[aria-selected="true"] .tab-number { color: #a8c3b9; }
+
+    .tab-kind {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--path);
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: .14em;
+    }
+
+    .tab[aria-selected="true"] .tab-kind { color: #a8c3b9; }
+    .tab[data-kind="Royal court"] .tab-kind { color: var(--royal); }
+    .tab[aria-selected="true"][data-kind="Royal court"] .tab-kind { color: #e7c879; }
+
+    .tab-name {
+      display: block;
+      font: 700 12px/1.2 var(--mono);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .workspace { padding-top: clamp(34px, 5vw, 64px); }
+
+    .puzzle-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 30px;
+      align-items: end;
+      margin-bottom: 28px;
+    }
+
+    .puzzle-tag {
+      margin-bottom: 11px;
+      color: var(--path);
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    h2 {
+      margin: 0;
+      font: 800 clamp(25px, 3.5vw, 42px)/1.08 var(--mono);
+      letter-spacing: -.045em;
+    }
+
+    .puzzle-description {
+      max-width: 650px;
+      margin: 12px 0 0;
+      color: var(--ink-2);
+      font-size: 15px;
+      line-height: 1.55;
+    }
+
+    .progress-block { min-width: 170px; text-align: right; }
+
+    .progress-number {
+      display: block;
+      font: 800 30px/1 var(--mono);
+      letter-spacing: -.06em;
+    }
+
+    .progress-label {
+      display: block;
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    .stage {
+      position: relative;
+      height: var(--stage-h, 560px);
+      min-height: 440px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background-color: var(--panel);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M0 0H32M0 0V32' fill='none' stroke='%23dfe5e2' stroke-width='1'/%3E%3C/svg%3E");
+      background-size: 32px 32px;
+      background-position: -1px -1px;
+      isolation: isolate;
+    }
+
+    .wire-canvas {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .node {
+      --node-width: clamp(112px, 15vw, 176px);
+      position: absolute;
+      left: calc(var(--x) * 1%);
+      top: calc(var(--y) * 1%);
+      z-index: 2;
+      width: var(--node-width);
+      min-height: 76px;
+      padding: 12px;
+      border: 1px solid var(--line-strong);
+      background: var(--panel);
+      transform: translateX(-50%);
+      opacity: 0;
+      animation: node-in 430ms cubic-bezier(.2,.8,.2,1) forwards;
+      animation-delay: calc(var(--order) * 55ms);
+      transition: border-color 150ms ease, background-color 150ms ease, transform 150ms ease;
+    }
+
+    .node:hover { border-color: var(--path); }
+
+    .node.clue,
+    .node.given { display: grid; place-items: center; text-align: center; }
+
+    .node.given {
+      color: #fff;
+      border-color: var(--ink);
+      background: var(--ink);
+    }
+
+    .node.queen {
+      display: grid;
+      place-items: center;
+      min-height: 104px;
+      padding: 10px 14px 12px;
+      color: #fff;
+      border: 2px solid var(--royal);
+      background: var(--ink);
+      text-align: center;
+    }
+
+    .queen-crown {
+      color: #e7c879;
+      font: 26px/1 Georgia, serif;
+    }
+
+    .queen-title,
+    .queen-hears,
+    .court-whisper {
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: .14em;
+    }
+
+    .queen-title { margin-top: 4px; font-size: 10px; font-weight: 800; }
+    .queen-hears { margin-top: 7px; color: #c7bda9; font-size: 7px; }
+    .queen.heard .queen-hears { color: #e7c879; }
+
+    .court-whisper {
+      position: absolute;
+      top: 7px;
+      left: 9px;
+      color: var(--royal);
+      font-size: 6px;
+      font-weight: 800;
+    }
+
+    .stage[data-theme="court"] { border-color: color-mix(in srgb, var(--royal) 45%, var(--line)); }
+    .stage[data-theme="court"] .node:not(.queen) { border-color: color-mix(in srgb, var(--royal) 55%, var(--line-strong)); }
+    .stage[data-theme="court"] .node.solved { border-color: var(--solved); }
+
+    .node.answer { cursor: text; }
+
+    .node.answer:focus-within {
+      border-color: var(--focus);
+      outline: 2px solid color-mix(in srgb, var(--focus) 20%, transparent);
+      outline-offset: 2px;
+    }
+
+    .node.locked {
+      color: var(--muted);
+      border-color: var(--line);
+      background: color-mix(in srgb, var(--panel) 88%, var(--line));
+      cursor: not-allowed;
+    }
+
+    .node.solved {
+      border-color: var(--solved);
+      background: var(--solved-soft);
+      animation: solved-pop 420ms cubic-bezier(.2,.9,.2,1) both;
+    }
+
+    .node.wrong { animation: shake 260ms ease both; border-color: var(--accent); }
+    .node.hinted:not(.solved) { border-color: var(--path); }
+
+    .node-kicker {
+      position: absolute;
+      top: 7px;
+      left: 9px;
+      color: var(--muted);
+      font-size: 7px;
+      letter-spacing: .13em;
+    }
+
+    .given .node-kicker { color: #a9c5bb; }
+
+    .clue-word,
+    .given-word {
+      padding-top: 9px;
+      font: 800 clamp(15px, 2.2vw, 23px)/1 var(--mono);
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+
+    .given-word { color: #fff; }
+
+    .cells {
+      display: grid;
+      grid-template-columns: repeat(var(--letters), minmax(0, 1fr));
+      gap: 3px;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .cell {
+      display: grid;
+      place-items: center;
+      aspect-ratio: .82;
+      min-width: 0;
+      border: 1px solid var(--line-strong);
+      background: var(--panel);
+      font: 800 clamp(11px, 1.8vw, 18px)/1 var(--mono);
+      text-transform: uppercase;
+    }
+
+    .locked .cell { border-color: var(--line); background: transparent; }
+    .solved .cell { color: var(--solved); border-color: var(--solved); background: var(--panel); }
+
+    .node-input {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      outline: 0;
+      opacity: .001;
+      cursor: text;
+    }
+
+    .node-input:disabled { cursor: not-allowed; }
+
+    .node-prompt {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font: 700 8px/1.35 var(--mono);
+      letter-spacing: .08em;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .stage-flash {
+      position: absolute;
+      z-index: 4;
+      width: 8px;
+      height: 8px;
+      background: var(--solved);
+      pointer-events: none;
+      animation: spark 720ms ease-out forwards;
+    }
+
+    .below-stage {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 24px;
+      align-items: center;
+      min-height: 78px;
+      padding: 18px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .status {
+      min-height: 18px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.6;
+    }
+
+    .status strong { color: var(--ink); }
+    .status.success { color: var(--solved); }
+
+    .controls { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+
+    .control {
+      min-height: 38px;
+      padding: 0 14px;
+      border: 1px solid var(--line-strong);
+      background: transparent;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: .13em;
+      cursor: pointer;
+      transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+    }
+
+    .control:hover { color: #fff; border-color: var(--path); background: var(--path); }
+    .control.primary { color: #fff; border-color: var(--ink); background: var(--ink); }
+    .control.primary:hover { border-color: var(--path); background: var(--path); }
+
+    .notes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      margin-top: clamp(58px, 8vw, 96px);
+      border-top: 1px solid var(--line);
+      border-left: 1px solid var(--line);
+    }
+
+    .note {
+      min-height: 140px;
+      padding: 22px;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .note-index {
+      display: block;
+      margin-bottom: 16px;
+      color: var(--accent);
+      font: 800 10px/1 var(--mono);
+    }
+
+    .note h3 {
+      margin: 0 0 9px;
+      font: 800 13px/1.2 var(--mono);
+      text-transform: uppercase;
+    }
+
+    .note p { margin: 0; color: var(--ink-2); font-size: 13px; line-height: 1.55; }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      margin-top: 46px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font: 700 9px/1.5 var(--mono);
+      text-transform: uppercase;
+      letter-spacing: .15em;
+    }
+
+    @keyframes node-in {
+      from { opacity: 0; transform: translateX(-50%); }
+      to { opacity: 1; transform: translateX(-50%); }
+    }
+
+    @keyframes solved-pop {
+      0% { opacity: 1; transform: translateX(-50%) scale(1); }
+      45% { opacity: 1; transform: translateX(-50%) scale(1.055); }
+      100% { opacity: 1; transform: translateX(-50%) scale(1); }
+    }
+
+    @keyframes shake {
+      0%, 100% { opacity: 1; transform: translateX(-50%); }
+      25% { opacity: 1; transform: translateX(calc(-50% - 5px)); }
+      75% { opacity: 1; transform: translateX(calc(-50% + 5px)); }
+    }
+
+    @keyframes spark {
+      from { opacity: 1; transform: translate(0, 0) rotate(0); }
+      to { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(180deg); }
+    }
+
+    @media (max-width: 760px) {
+      .hero { grid-template-columns: 1fr; align-items: start; gap: 42px; }
+      .rule { max-width: 540px; }
+      .puzzle-head { grid-template-columns: 1fr; }
+      .progress-block { display: flex; align-items: baseline; gap: 10px; text-align: left; }
+      .progress-label { margin-top: 0; }
+      .stage { height: var(--stage-h-mobile, var(--stage-h)); }
+      .node {
+        --node-width: clamp(104px, 29vw, 132px);
+        left: calc(var(--mx) * 1%);
+        top: calc(var(--my) * 1%);
+        padding: 10px;
+        min-height: 70px;
+      }
+      .stage[data-puzzle="tree"] .node.clue { --node-width: 80px; padding-inline: 7px; }
+      .stage[data-puzzle="tree"] .node.answer { --node-width: 120px; }
+      .stage[data-puzzle="tree"] .clue-word { font-size: 13px; }
+      .stage[data-puzzle="cause_effect"] .node.clue { --node-width: 80px; padding-inline: 5px; }
+      .stage[data-puzzle="cause_effect"] .node.answer { --node-width: 120px; }
+      .stage[data-puzzle="cause_effect"] .clue-word { font-size: 11px; }
+      .stage:is([data-puzzle="court_wings"], [data-puzzle="court_knight"], [data-puzzle="court_snack"], [data-layout="wings"]) .node.clue,
+      .stage:is([data-puzzle="court_round"], [data-puzzle="court_choir"], [data-layout="round"]) .node.clue { --node-width: 80px; padding-inline: 5px; }
+      .stage:is([data-puzzle="court_wings"], [data-puzzle="court_knight"], [data-puzzle="court_snack"], [data-layout="wings"]) .node.answer,
+      .stage:is([data-puzzle="court_round"], [data-puzzle="court_choir"], [data-layout="round"]) .node.answer { --node-width: 120px; }
+      .stage:is([data-puzzle="court_wings"], [data-puzzle="court_knight"], [data-puzzle="court_snack"], [data-layout="wings"]) .clue-word,
+      .stage:is([data-puzzle="court_round"], [data-puzzle="court_choir"], [data-layout="round"]) .clue-word { font-size: 11px; }
+      .stage[data-theme="court"] .node.queen { --node-width: 132px; }
+      .cells { gap: 2px; }
+      .below-stage { grid-template-columns: 1fr; }
+      .controls { justify-content: flex-start; }
+      .notes { grid-template-columns: 1fr; }
+      footer { flex-direction: column; }
+    }
+
+    @media (max-width: 420px) {
+      .page { padding-inline: 12px; }
+      .masthead { min-height: 62px; }
+      .issue { display: none; }
+      .hero { padding-top: 42px; }
+      h1 { font-size: 40px; }
+      .tabs-wrap { margin-inline: -12px; }
+      .tab { min-width: 132px; padding-inline: 14px; }
+      .stage { margin-inline: -12px; border-left: 0; border-right: 0; }
+      .node { --node-width: 104px; }
+      .node-prompt { font-size: 7px; }
+      .control { padding-inline: 11px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #101312;
+        --panel: #151918;
+        --ink: #f0f3f1;
+        --ink-2: #c3cbc7;
+        --muted: #8f9a95;
+        --line: #2b322f;
+        --line-strong: #53605a;
+        --path: #6cc3aa;
+        --path-faint: #2c4039;
+        --accent: #ff7669;
+        --solved: #54d7a2;
+        --solved-soft: #10251e;
+        --royal: #d8b05d;
+        --royal-soft: #2a2318;
+        --focus: #7aa2ff;
+      }
+      .tab[aria-selected="true"], .node.given, .control.primary { color: #101312; background: var(--ink); }
+      .given-word { color: #101312; }
+      .given .node-kicker { color: #44554e; }
+      .stage { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M0 0H32M0 0V32' fill='none' stroke='%232b322f' stroke-width='1'/%3E%3C/svg%3E"); }
+    }
+
+    .puzzle-tools { display: grid; justify-items: end; gap: 14px; }
+    .display-switch { display: inline-grid; grid-template-columns: auto auto; gap: 2px; padding: 2px; border: 1px solid var(--line-strong); background: var(--panel); }
+    .display-option { min-height: 34px; padding: 0 11px; border: 0; background: transparent; color: var(--muted); cursor: pointer; font: 800 8px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+    .display-option[aria-pressed="true"] { color: #fff; background: var(--ink); }
+    .queen-announcer, .advisor-avatar, .queen-character { display: none; }
+
+    html[data-display="court-app"] {
+      color-scheme: light;
+      --bg: #7655a4;
+      --panel: #fffdf8;
+      --ink: #372947;
+      --ink-2: #66566f;
+      --muted: #8b7a91;
+      --line: #eadff0;
+      --line-strong: #bda9ca;
+      --path: #74559e;
+      --path-faint: #dfd1eb;
+      --accent: #db5f7b;
+      --solved: #188763;
+      --solved-soft: #eaf8ef;
+      --royal: #d69c18;
+      --royal-soft: #fff2c9;
+      --focus: #7655a4;
+      background: #7655a4;
+    }
+
+    html[data-display="court-app"] body { background: #7655a4; }
+    html[data-display="court-app"] .page { width: min(calc(100% - 28px), 1180px); min-height: 100svh; padding: 0 24px 28px; background: #fff8e9; box-shadow: 0 0 0 1px rgba(55,41,71,.08), 0 18px 60px rgba(36,22,52,.28); }
+    html[data-display="court-app"] .masthead { min-height: 62px; border-bottom: 0; }
+    html[data-display="court-app"] .brand { font-family: var(--sans); font-size: 17px; letter-spacing: -.02em; }
+    html[data-display="court-app"] .brand span { color: var(--royal); }
+    html[data-display="court-app"] .issue { padding: 8px 12px; border-radius: 999px; color: #fff; background: #604284; font-size: 8px; }
+    html[data-display="court-app"] .hero { grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 36px; padding: 24px 0 26px; }
+    html[data-display="court-app"] .hero h1 { max-width: none; font-family: var(--sans); font-size: clamp(34px,5vw,58px); line-height: .98; letter-spacing: -.055em; }
+    html[data-display="court-app"] .hero-copy { max-width: 600px; margin-top: 12px; font-size: 16px; }
+    html[data-display="court-app"] .eyebrow { margin-bottom: 10px; color: var(--royal); font-size: 9px; }
+    html[data-display="court-app"] .rule { display: none; }
+
+    html[data-display="court-app"] .tabs-wrap { overflow: hidden; border: 0; border-radius: 20px; background: #fff; box-shadow: 0 5px 0 #dfd0e8, 0 12px 28px rgba(75,49,98,.10); }
+    html[data-display="court-app"] .tabs {
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      gap: 5px;
+      padding: 7px;
+      scrollbar-width: thin;
+      -webkit-overflow-scrolling: touch;
+    }
+    html[data-display="court-app"] .tab {
+      flex: 1 1 125px;
+      min-width: 115px;
+      min-height: 84px;
+      padding: 11px 12px;
+      border: 0;
+      border-radius: 14px;
+      transition: transform 150ms ease, background-color 150ms ease, color 150ms ease;
+    }
+    html[data-display="court-app"] .tab:hover { color: var(--ink); background: #f5ecfa; transform: translateY(-1px); }
+    html[data-display="court-app"] .tab[aria-selected="true"] { color: #fff; background: #67478e; }
+    html[data-display="court-app"] .tab-kind { color: #8c6aa5; }
+    html[data-display="court-app"] .tab[data-kind="Royal court"] .tab-kind { color: #a97100; }
+    html[data-display="court-app"] .tab[aria-selected="true"] .tab-kind,
+    html[data-display="court-app"] .tab[aria-selected="true"] .tab-number { color: #ffe29a; }
+    html[data-display="court-app"] .tab.is-solved { position: relative; }
+    html[data-display="court-app"] .tab.is-solved .tab-number { color: #188763; font-weight: 800; }
+    html[data-display="court-app"] .tab[aria-selected="true"].is-solved .tab-number { color: #ffe29a; }
+    @media (min-width: 960px) {
+      .tabs,
+      html[data-display="court-app"] .tabs {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+      }
+      .tab,
+      html[data-display="court-app"] .tab {
+        min-width: 0;
+        padding-inline: 8px;
+      }
+    }
+
+    html[data-display="court-app"] .workspace { padding-top: 30px; }
+    html[data-display="court-app"] .puzzle-head { align-items: center; margin-bottom: 18px; }
+    html[data-display="court-app"] h2 { font-family: var(--sans); font-size: clamp(28px,4vw,44px); letter-spacing: -.045em; }
+    html[data-display="court-app"] .puzzle-tag { display: inline-flex; margin-bottom: 10px; padding: 7px 10px; border-radius: 999px; color: #67478e; background: #eee2f5; font-size: 8px; }
+    html[data-display="court-app"] .puzzle-tools { display: flex; align-items: center; gap: 12px; }
+    html[data-display="court-app"] .display-switch { gap: 4px; padding: 4px; border: 0; border-radius: 999px; background: #eee2f5; }
+    html[data-display="court-app"] .display-option { min-height: 36px; border-radius: 999px; color: #765e82; font-family: var(--sans); font-size: 11px; letter-spacing: 0; text-transform: none; }
+    html[data-display="court-app"] .display-option[aria-pressed="true"] { color: #fff; background: #67478e; box-shadow: 0 3px 0 #4e356c; }
+    html[data-display="court-app"] .progress-block { min-width: 104px; padding: 10px 14px; border-radius: 17px; color: #67478e; background: #fff; box-shadow: 0 4px 0 #dfd0e8; }
+    html[data-display="court-app"] .progress-number { font-family: var(--sans); font-size: 26px; letter-spacing: -.04em; }
+    html[data-display="court-app"] .progress-label { color: #8c7397; font-family: var(--sans); font-weight: 800; letter-spacing: .05em; }
+
+    html[data-display="court-app"] .queen-announcer:not([hidden]) { display: flex; align-items: center; gap: 7px; margin-bottom: 16px; padding: 0 14px; }
+    .app-queen-portrait { position: relative; z-index: 3; flex: 0 0 78px; width: 78px; height: 90px; filter: drop-shadow(0 4px 0 rgba(62,43,75,.18)); }
+    .app-queen-portrait svg { display: block; width: 100%; height: 100%; }
+    .announcer-copy { --announcement-bg: #fff3c6; --announcement-border: #d6a72f; position: relative; min-width: 0; flex: 1; padding: 13px 18px; border: 2px solid var(--announcement-border); border-radius: 20px; background: var(--announcement-bg); box-shadow: 0 5px 0 var(--announcement-border); }
+    .announcer-copy::before,
+    .announcer-copy::after { content: ""; position: absolute; top: 50%; width: 0; height: 0; transform: translateY(-50%); }
+    .announcer-copy::before { left: -17px; border-top: 11px solid transparent; border-right: 17px solid var(--announcement-border); border-bottom: 11px solid transparent; }
+    .announcer-copy::after { left: -12px; border-top: 8px solid transparent; border-right: 13px solid var(--announcement-bg); border-bottom: 8px solid transparent; }
+    .announcer-label { display: block; margin-bottom: 4px; color: #8a6210; font: 800 9px/1 var(--sans); letter-spacing: .08em; text-transform: uppercase; }
+    .announcer-word { display: block; color: #4a3523; font: 800 clamp(17px,2.2vw,24px)/1.1 var(--sans); }
+    html[data-display="court-app"] .queen-announcer.heard { animation: queen-hears 520ms cubic-bezier(.2,.9,.2,1) both; }
+    html[data-display="court-app"] .queen-announcer.heard .announcer-copy { --announcement-bg: #e8f8ef; --announcement-border: #62b58d; }
+    html[data-display="court-app"] .queen-announcer.heard .announcer-label { color: #237452; }
+
+    html[data-display="court-app"] .stage { min-height: 440px; overflow: hidden; border: 0; border-radius: 26px; background-color: #f1e8f8; background-image: none; box-shadow: inset 0 0 0 2px #dfd0e8, 0 7px 0 #d8c6e4; }
+    html[data-display="court-app"] .stage::before,
+    html[data-display="court-app"] .stage::after { position: absolute; z-index: 0; color: rgba(116,85,158,.16); font: 34px/1 Georgia,serif; pointer-events: none; }
+    html[data-display="court-app"] .stage::before { content: "✦"; top: 22px; left: 24px; }
+    html[data-display="court-app"] .stage::after { content: "♛"; right: 26px; bottom: 20px; }
+    html[data-display="court-app"] .node { --bubble-bg: #fffdf8; --bubble-border: #bda9ca; border: 2px solid var(--bubble-border); border-radius: 18px; background: var(--bubble-bg); box-shadow: 0 5px 0 rgba(94,68,115,.20); transition: border-color 150ms ease, background-color 150ms ease, transform 150ms ease, box-shadow 150ms ease; }
+    html[data-display="court-app"] .node:not(.queen)::before,
+    html[data-display="court-app"] .node:not(.queen)::after { content: ""; position: absolute; top: 50%; z-index: 4; width: 0; height: 0; transform: translateY(-50%); pointer-events: none; }
+    html[data-display="court-app"] .node.avatar-right::before { right: -20px; border-top: 11px solid transparent; border-bottom: 11px solid transparent; border-left: 20px solid var(--bubble-border); }
+    html[data-display="court-app"] .node.avatar-right::after { right: -14px; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-left: 15px solid var(--bubble-bg); }
+    html[data-display="court-app"] .node.avatar-left::before { left: -20px; border-top: 11px solid transparent; border-right: 20px solid var(--bubble-border); border-bottom: 11px solid transparent; }
+    html[data-display="court-app"] .node.avatar-left::after { left: -14px; border-top: 8px solid transparent; border-right: 15px solid var(--bubble-bg); border-bottom: 8px solid transparent; }
+    html[data-display="court-app"] .node:hover { border-color: #7655a4; box-shadow: 0 7px 0 rgba(94,68,115,.24); }
+    html[data-display="court-app"] .node.given { --bubble-bg: #67478e; --bubble-border: #67478e; color: #fff; box-shadow: 0 5px 0 #4e356c; }
+    html[data-display="court-app"] .node.queen { --bubble-bg: #543676; --bubble-border: #d69c18; border-color: var(--bubble-border); border-radius: 22px; background: var(--bubble-bg); box-shadow: 0 6px 0 #352047; }
+    html[data-display="court-app"] .node.queen::before,
+    html[data-display="court-app"] .node.queen::after { content: ""; position: absolute; top: 50%; z-index: 4; width: 0; height: 0; transform: translateY(-50%); pointer-events: none; }
+    html[data-display="court-app"] .node.queen::before { left: -20px; border-top: 11px solid transparent; border-right: 20px solid var(--bubble-border); border-bottom: 11px solid transparent; }
+    html[data-display="court-app"] .node.queen::after { left: -14px; border-top: 8px solid transparent; border-right: 15px solid var(--bubble-bg); border-bottom: 8px solid transparent; }
+    html[data-display="court-app"] .node.locked { --bubble-bg: #f5eef8; --bubble-border: #d4c4de; opacity: .72; box-shadow: 0 4px 0 rgba(94,68,115,.12); }
+    html[data-display="court-app"] .node.solved { --bubble-bg: #edfaf2; --bubble-border: var(--solved); box-shadow: 0 5px 0 #85c8aa; }
+    html[data-display="court-app"] .cell { border: 2px solid #bda9ca; border-radius: 8px; background: #fff; font-family: var(--sans); }
+    html[data-display="court-app"] .solved .cell { border-color: var(--solved); background: #fff; }
+    html[data-display="court-app"] .clue-word,
+    html[data-display="court-app"] .given-word { font-family: var(--sans); letter-spacing: -.01em; }
+    html[data-display="court-app"] .advisor-avatar { position: absolute; top: 50%; right: -54px; z-index: 6; display: block; width: 74px; height: 86px; translate: 0 -50%; filter: drop-shadow(0 4px 0 rgba(62,43,75,.20)); animation: avatar-pop 420ms cubic-bezier(.2,.9,.2,1) both; animation-delay: calc(var(--order) * 55ms + 160ms); pointer-events: none; }
+    html[data-display="court-app"] .node.avatar-left .advisor-avatar { right: auto; left: -54px; }
+    html[data-display="court-app"] .advisor-avatar svg { display: block; width: 100%; height: 100%; }
+    html[data-display="court-app"] .queen-crown { display: none; }
+    html[data-display="court-app"] .queen-character { position: absolute; top: 50%; left: -59px; z-index: 6; display: block; width: 80px; height: 92px; translate: 0 -50%; filter: drop-shadow(0 4px 0 rgba(35,22,45,.28)); pointer-events: none; }
+    html[data-display="court-app"] .queen-character svg { display: block; width: 100%; height: 100%; }
+    html[data-display="court-app"] .court-whisper { color: #91690d; }
+
+    html[data-display="court-app"] .below-stage { min-height: 76px; border-bottom: 0; }
+    html[data-display="court-app"] .status { color: #765e82; font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: .03em; }
+    html[data-display="court-app"] .control { min-height: 42px; padding: 0 17px; border: 0; border-radius: 999px; color: #67478e; background: #eee2f5; box-shadow: 0 3px 0 #d3bedf; font-family: var(--sans); font-size: 11px; font-weight: 800; letter-spacing: 0; text-transform: none; transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease; }
+    html[data-display="court-app"] .control.primary { color: #fff; background: #67478e; box-shadow: 0 3px 0 #4e356c; }
+    html[data-display="court-app"] .control:hover { color: #fff; background: #8161aa; transform: translateY(-1px); }
+    html[data-display="court-app"] .control:active { transform: translateY(2px); box-shadow: 0 1px 0 #4e356c; }
+    html[data-display="court-app"] .notes,
+    html[data-display="court-app"] footer { display: none; }
+
+    @keyframes avatar-pop { from { opacity: 0; transform: scale(.2) rotate(-14deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+    @keyframes queen-hears { 0% { transform: scale(.98); } 50% { transform: scale(1.018) rotate(-.3deg); } 100% { transform: scale(1); } }
+
+    @media (max-width: 760px) {
+      .puzzle-tools { justify-items: start; }
+      html[data-display="court-app"] .page { width: 100%; padding-inline: 14px; box-shadow: none; }
+      html[data-display="court-app"] .hero { grid-template-columns: 1fr; padding: 18px 0 20px; }
+      html[data-display="court-app"] .hero h1 { font-size: 38px; }
+      html[data-display="court-app"] .puzzle-head { gap: 18px; }
+      html[data-display="court-app"] .puzzle-tools { align-items: stretch; justify-content: space-between; }
+      html[data-display="court-app"] .progress-block { display: grid; min-width: 90px; text-align: center; }
+      html[data-display="court-app"] .display-option { padding-inline: 12px; }
+      html[data-display="court-app"] .queen-announcer:not([hidden]) { gap: 3px; padding: 0 3px; }
+      html[data-display="court-app"] .app-queen-portrait { flex-basis: 62px; width: 62px; height: 72px; }
+      html[data-display="court-app"] .announcer-copy { padding: 11px 13px; }
+      html[data-display="court-app"] .advisor-avatar { top: calc(100% - 10px); right: -2px; width: 54px; height: 66px; translate: 0 0; }
+      html[data-display="court-app"] .node.avatar-left .advisor-avatar { right: auto; left: -2px; }
+      html[data-display="court-app"] .node:not(.queen)::before,
+      html[data-display="court-app"] .node:not(.queen)::after { top: auto; transform: none; }
+      html[data-display="court-app"] .node.avatar-right::before { right: 16px; bottom: -16px; border-top: 16px solid var(--bubble-border); border-right: 10px solid transparent; border-bottom: 0; border-left: 10px solid transparent; }
+      html[data-display="court-app"] .node.avatar-right::after { right: 19px; bottom: -11px; border-top: 12px solid var(--bubble-bg); border-right: 7px solid transparent; border-bottom: 0; border-left: 7px solid transparent; }
+      html[data-display="court-app"] .node.avatar-left::before { bottom: -16px; left: 16px; border-top: 16px solid var(--bubble-border); border-right: 10px solid transparent; border-bottom: 0; border-left: 10px solid transparent; }
+      html[data-display="court-app"] .node.avatar-left::after { bottom: -11px; left: 19px; border-top: 12px solid var(--bubble-bg); border-right: 7px solid transparent; border-bottom: 0; border-left: 7px solid transparent; }
+      html[data-display="court-app"] .stage[data-puzzle="bridge"] .node[data-node="jack"] .advisor-avatar { top: 50%; right: auto; left: -45px; translate: 0 -50%; }
+      html[data-display="court-app"] .stage[data-puzzle="bridge"] .node[data-node="jack"]::before,
+      html[data-display="court-app"] .stage[data-puzzle="bridge"] .node[data-node="jack"]::after { top: 50%; bottom: auto; transform: translateY(-50%); }
+      html[data-display="court-app"] .stage[data-puzzle="bridge"] .node[data-node="jack"]::before { left: -20px; border-top: 11px solid transparent; border-right: 20px solid var(--bubble-border); border-bottom: 11px solid transparent; border-left: 0; }
+      html[data-display="court-app"] .stage[data-puzzle="bridge"] .node[data-node="jack"]::after { left: -14px; border-top: 8px solid transparent; border-right: 15px solid var(--bubble-bg); border-bottom: 8px solid transparent; border-left: 0; }
+      html[data-display="court-app"] .stage[data-puzzle="court_rising"] .node:is([data-node="c1"], [data-node="c2"]) .advisor-avatar { top: calc(100% - 19px); width: 50px; height: 60px; translate: 0 0; }
+      html[data-display="court-app"] .queen-character { left: -45px; width: 62px; height: 72px; }
+      html[data-display="court-app"] .tabs-wrap { margin-inline: -14px; border-radius: 0; }
+      html[data-display="court-app"] .stage { margin-inline: -14px; border-radius: 0; }
+    }
+
+    .timer-bar { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 24px; padding: 14px 0 19px; background: var(--panel); border-bottom: 1px solid var(--line); }
+    html[data-display="court-app"] .timer-bar { background: #fff8e9; }
+    .timer-readout { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+    .timer-label { font: 700 13px/1.3 var(--mono); max-width: 4ch; }
+    #timer { font: 700 36px/1 var(--mono); font-variant-numeric: tabular-nums; }
+    #timer.urgent { color: #b32929; }
+    #round-status { flex: 1; margin: 0; font-size: 15px; }
+    .timer-track { position: absolute; bottom: 0; left: 0; right: 0; height: 4px; background: #ddd1e5; }
+    #timer-fill { height: 100%; width: 100%; background: #7655a4; transition: width .1s linear; }
+    button:disabled { opacity: .55; cursor: default; }
+    .round-cover { position: absolute; inset: 0; z-index: 20; background: #f1e8f8; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 70px 24px 24px; text-align: center; color: #372947; }
+    .round-cover[hidden] { display: none; }
+    .round-cover strong { font-size: 28px; }
+    .round-cover p { max-width: 380px; line-height: 1.6; font-size: 17px; }
+    .round-cover button { margin: 8px; }
+    html[data-display="court-app"] .hero { padding: 10px 0 20px; }
+    html[data-display="court-app"] .hero h1 { font-size: 36px; }
+    .puzzle-head { padding-top: 20px; }
+    .tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .tab { min-width: 0; }
+    @media(max-width: 640px) {
+      .timer-bar { flex-wrap: wrap; gap: 10px; padding-top: 10px; }
+      .timer-readout { margin-right: auto; }
+      #round-status { order: 3; flex-basis: 100%; font-size: 14px; }
+      #timer { font-size: 30px; }
+      .timer-bar .control { padding: 10px; font-size: 13px; }
+      .round-cover { padding-top: 48px; }
+      .tab-kind { display: none; }
+    }
+    @media(prefers-reduced-motion: reduce) { .node { opacity: 1; } *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+    /* Compact words and character portraits, without role captions. */
+    .clue-word, .given-word { padding-top: 0; }
+    .cells { margin-top: 0; }
+    .node.answer { display: grid; align-items: center; }
+    .queen-hears { font: 600 14px/1.3 var(--sans); margin: 0; letter-spacing: 0; text-transform: none; }
+    html[data-display="court-app"] .advisor-avatar { right: -84px; }
+    html[data-display="court-app"] .node.avatar-left .advisor-avatar { left: -84px; }
+    html[data-display="court-app"] .queen-character { left: -90px; }
+    @media (max-width: 760px) {
+      html[data-display="court-app"] .masthead { display: none; }
+      html[data-display="court-app"] .hero { padding: 14px 0 12px; }
+      html[data-display="court-app"] .hero h1 { font-size: 26px; letter-spacing: -.035em; }
+      .hero-copy { display: none; }
+      html[data-display="court-app"] .tabs-wrap { border-radius: 0; box-shadow: 0 2px 0 #dfd0e8; }
+      html[data-display="court-app"] .tabs { gap: 4px; padding: 4px 8px; }
+      html[data-display="court-app"] .tab { min-height: 44px; padding: 8px 5px; }
+      .tab-number, .tab-kind { display: none; }
+      .tab-name { font: 700 13px/1.15 var(--sans); letter-spacing: 0; text-transform: none; }
+      html[data-display="court-app"] .workspace { padding-top: 4px; }
+      .timer-bar { gap: 8px; padding: 8px 0 12px; }
+      .timer-label { font-size: 13px; }
+      #round-status { font-size: 13px; line-height: 1.3; }
+      html[data-display="court-app"] .puzzle-head { display: flex; flex-direction: column; align-items: stretch; padding-top: 10px; gap: 8px; margin-bottom: 12px; }
+      .puzzle-tag, .puzzle-head h2 { display: none !important; }
+      .puzzle-description { margin: 0; font-size: 14px; line-height: 1.35; }
+      html[data-display="court-app"] .puzzle-tools { align-items: center; gap: 8px; }
+      html[data-display="court-app"] .display-switch { padding: 2px; }
+      html[data-display="court-app"] .display-option { min-height: 44px; font-size: 13px; padding-inline: 10px; }
+      html[data-display="court-app"] .progress-block { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 0; box-shadow: none; background: transparent; }
+      html[data-display="court-app"] .progress-number { font-size: 20px; }
+      html[data-display="court-app"] .progress-label { font-size: 13px; letter-spacing: 0; text-transform: none; }
+      .stage { height: 520px; }
+      .node { --node-width: 104px; min-height: 48px; padding: 7px; }
+      html[data-display="court-app"] .node { border-radius: 13px; }
+      .stage[data-theme="court"] .node.queen { --node-width: 118px; min-height: 52px; padding: 6px; }
+      .stage:is([data-puzzle="court_wings"], [data-layout="wings"]) .node.clue { --node-width: 23%; padding: 3px; }
+      .stage:is([data-puzzle="court_round"], [data-layout="round"]) .node.clue { --node-width: 76px; padding: 4px; }
+      .stage:is([data-puzzle="court_wings"], [data-layout="wings"]) .node.answer { --node-width: 112px; }
+      .stage:is([data-puzzle="court_round"], [data-layout="round"]) .node.answer { --node-width: 112px; }
+      .stage:is([data-puzzle="court_round"], [data-layout="round"]) .node[data-node="a3"] { --node-width: 104px; }
+      html[data-display="court-app"] .clue-word { font-size: 14px; }
+      .stage:is([data-puzzle="court_wings"], [data-layout="wings"]) .clue-word { font-size: 13px; }
+      html[data-display="court-app"] .cell { min-height: 27px; aspect-ratio: auto; border-width: 1px; border-radius: 4px; font-size: 14px; }
+      html[data-display="court-app"] .node .advisor-avatar,
+      html[data-display="court-app"] .node.avatar-left .advisor-avatar,
+      html[data-display="court-app"] .stage:is([data-puzzle="court_rising"], [data-layout="rising"]) .node:is([data-node="c1"], [data-node="c2"]) .advisor-avatar { top: calc(100% + 5px); left: calc(50% - 20px); right: auto; width: 40px; height: 46px; translate: 0 0; }
+      html[data-display="court-app"] .queen-character { width: 48px; height: 56px; left: -58px; }
+      html[data-display="court-app"] .node:not(.queen)::before { left: calc(50% - 10px); right: auto; bottom: -13px; border-width: 13px 10px 0; }
+      html[data-display="court-app"] .node:not(.queen)::after { left: calc(50% - 7px); right: auto; bottom: -9px; border-width: 10px 7px 0; }
+      html[data-display="court-app"] .below-stage { gap: 10px; min-height: 0; padding-top: 14px; }
+      html[data-display="court-app"] .status { font-size: 13px; line-height: 1.35; text-transform: none; letter-spacing: 0; }
+      .controls { flex-wrap: wrap; gap: 8px; }
+      html[data-display="court-app"] .control { min-height: 44px; font-size: 13px; padding-inline: 12px; }
+      #fullscreen-button { display: none; }
+      .round-cover { padding-top: 40px; }
+      .round-cover strong { font-size: 24px; }
+      .round-cover p { font-size: 16px; }
+    }
+
+    @media (min-width: 761px) {
+      html[data-display="court-app"] .stage:is([data-puzzle="court_wings"], [data-layout="wings"]) .node.clue .advisor-avatar { top: calc(100% + 5px); left: calc(50% - 24px); right: auto; width: 48px; height: 56px; translate: 0 0; }
+      html[data-display="court-app"] .stage:is([data-puzzle="court_rising"], [data-layout="rising"]) .node[data-node="a1"] .advisor-avatar { top: calc(100% + 5px); left: calc(50% - 24px); right: auto; width: 48px; height: 56px; translate: 0 0; }
+      html[data-display="court-app"] .stage:is([data-puzzle="court_wings"], [data-layout="wings"]) .node.clue::before,
+      html[data-display="court-app"] .stage:is([data-puzzle="court_rising"], [data-layout="rising"]) .node[data-node="a1"]::before { top: auto; left: calc(50% - 10px); right: auto; bottom: -13px; transform: none; border: 0; border-top: 13px solid var(--bubble-border); border-inline: 10px solid transparent; }
+      html[data-display="court-app"] .stage:is([data-puzzle="court_wings"], [data-layout="wings"]) .node.clue::after,
+      html[data-display="court-app"] .stage:is([data-puzzle="court_rising"], [data-layout="rising"]) .node[data-node="a1"]::after { top: auto; left: calc(50% - 7px); right: auto; bottom: -9px; transform: none; border: 0; border-top: 10px solid var(--bubble-bg); border-inline: 7px solid transparent; }
+    }
+    @media (max-width: 360px) {
+      .stage:is([data-puzzle="court_rising"], [data-layout="rising"]) .node:not(.queen) { --node-width: 92px; }
+      .stage:is([data-puzzle="court_round"], [data-layout="round"]) .node.answer { --node-width: 94px; }
+      .stage:is([data-puzzle="court_round"], [data-layout="round"]) .node[data-node="a3"] { --node-width: 104px; }
+    }
+
+    .share-results { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--line); }
+    .share-results[hidden] { display: none; }
+    html[data-display="court-app"] .share-results h2 { font-size: 26px; letter-spacing: -.03em; margin: 0 0 8px; }
+    .share-results p { font-size: 15px; line-height: 1.5; margin: 0 0 18px; }
+    .share-options { display: grid; grid-template-columns: minmax(0,480px); gap: 18px; }
+    .share-option { min-width: 0; }
+    .share-option h3 { font: 700 16px/1.4 var(--sans); margin: 0 0 10px; }
+    .share-option canvas { display: block; width: 100%; height: auto; border: 1px solid #d3c3df; border-radius: 12px; }
+    .share-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    html[data-display="court-app"] .share-actions .control { font-size: 14px; }
+    #share-feedback { margin-top: 16px; }
+    @media(max-width: 760px) { .share-options { grid-template-columns: 1fr; gap: 26px; } .share-results { margin-top: 22px; } }
+
+    @media(max-width:760px) {
+      .stage:is([data-puzzle="court_wings"], [data-layout="wings"]) .node.answer { --node-width: 134px; }
+      .stage:is([data-puzzle="court_rising"], [data-layout="rising"]) .node[data-node="a3"] { --node-width: 124px; }
+      .stage:is([data-puzzle="court_round"], [data-layout="round"]) .node[data-node="a3"] { --node-width: 104px; }
+      html[data-display="court-app"] .stage:is([data-puzzle="court_rising"], [data-layout="rising"]) .node[data-node="c4"] .clue-word { font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="masthead">
+      <div class="brand">STST <span>/ SOLO</span></div>
+      <div class="issue">Royal Court · 60 seconds</div>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="page-title"><div>
+        <h1 id="page-title">Royal Court</h1>
+        <p class="hero-copy">Connect the silly pairs. Make the Queen laugh in 60 seconds.</p>
+      </div></section>
+
+      <nav class="tabs-wrap" aria-label="Puzzle variations">
+        <div class="tabs" id="puzzle-tabs" role="tablist"></div>
+      </nav>
+
+      <section class="workspace">
+        <div class="timer-bar">
+          <div class="timer-readout"><span class="timer-label">TIME LEFT</span><strong id="timer" role="timer" aria-label="60 seconds remaining">1:00</strong></div>
+          <p id="round-status" role="status">Choose a board, then start your minute.</p>
+          <button class="control primary" id="start-button" type="button">Start 60 seconds</button>
+          <div class="timer-track" aria-hidden="true"><div id="timer-fill"></div></div>
+        </div>
+        <div class="puzzle-head">
+          <div>
+            <div class="puzzle-tag" id="puzzle-tag"></div>
+            <h2 id="puzzle-title"></h2>
+            <p class="puzzle-description" id="puzzle-description"></p>
+          </div>
+          <div class="puzzle-tools">
+            <div class="display-switch" role="group" aria-label="Display style">
+              <button class="display-option" type="button" data-display-option="diagram" aria-pressed="false">Diagram</button>
+              <button class="display-option" type="button" data-display-option="court-app" aria-pressed="true">Court app</button>
+            </div>
+            <div class="progress-block" aria-label="Puzzle progress">
+              <span class="progress-number" id="progress-number">0 / 0</span>
+              <span class="progress-label">links solved</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="queen-announcer" id="queen-announcer" aria-live="polite" hidden>
+          <div class="app-queen-portrait" aria-hidden="true">
+            <svg viewBox="0 0 80 92">
+              <circle cx="40" cy="39" r="33" fill="#7655a4" stroke="#372947" stroke-width="2.5"/>
+              <path d="M8 91c2-19 14-29 32-29s30 10 32 29Z" fill="#543676" stroke="#372947" stroke-width="2.5"/>
+              <path d="M28 65 40 77 52 65l7 8-9 18H30l-9-18Z" fill="#fff3c6" stroke="#372947" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M34 57v11h12V57" fill="#c98462" stroke="#372947" stroke-width="2"/>
+              <path d="M17 39c0-18 9-28 23-28s23 10 23 28v18c-6 8-14 12-23 12S23 65 17 57Z" fill="#4b2f52"/>
+              <circle cx="40" cy="42" r="21" fill="#d9a07e" stroke="#372947" stroke-width="2"/>
+              <path d="M20 38c2-18 10-25 21-25 13 0 21 9 21 27-6-8-13-12-22-12-8 0-14 3-20 10Z" fill="#4b2f52"/>
+              <path d="M18 23 23 5l17 14L57 5l5 18Z" fill="#f3bd3d" stroke="#4a3523" stroke-width="2.5" stroke-linejoin="round"/>
+              <circle cx="23" cy="6" r="3" fill="#ef7792" stroke="#4a3523" stroke-width="1.5"/>
+              <circle cx="40" cy="18" r="3" fill="#ef7792" stroke="#4a3523" stroke-width="1.5"/>
+              <circle cx="57" cy="6" r="3" fill="#ef7792" stroke="#4a3523" stroke-width="1.5"/>
+              <path d="M28 43q4-3 8 0M44 43q4-3 8 0" fill="none" stroke="#372947" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="32" cy="44" r="1.7" fill="#372947"/>
+              <circle cx="48" cy="44" r="1.7" fill="#372947"/>
+              <path d="M40 46v6l3 1" fill="none" stroke="#9d654d" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M33 57c4 4 10 4 14 0" fill="none" stroke="#a94f65" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="40" cy="79" r="4" fill="#ef7792" stroke="#372947" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <div class="announcer-copy">
+            <span class="announcer-label" id="announcer-label">Her Majesty is listening</span>
+            <strong class="announcer-word" id="announcer-word">Solve the final whisper</strong>
+          </div>
+        </div>
+
+        <div class="stage" id="stage" role="tabpanel" aria-labelledby="puzzle-title">
+          <div class="round-cover" id="round-cover"><strong id="cover-title">Make the Queen laugh.</strong><p id="cover-copy">Each odd pair leads to a funny connection. Solve your way to the punchline in 60 seconds.</p><button class="control primary" id="cover-start" type="button">Start 60 seconds</button><button class="control" id="review-button" type="button" hidden>Review board</button></div>
+          <canvas class="wire-canvas" id="wire-canvas" aria-hidden="true"></canvas>
+        </div>
+
+        <div class="below-stage">
+          <p class="status" id="status">Choose any available empty word.</p>
+          <div class="controls">
+            <button class="control primary" id="hint-button" type="button">Hint</button>
+            <button class="control" id="reset-button" type="button">Reset timer & board</button>
+            <button class="control" id="fullscreen-button" type="button">Fullscreen [F]</button>
+          </div>
+        </div>
+      </section>
+
+
+
+      <section class="share-results" id="share-results" aria-labelledby="share-title" hidden>
+        <h2 id="share-title">Share your result</h2>
+        <p>Your board, without the words. Empty boxes show word lengths. Brown clues, green solved answers, gray unsolved answers.</p>
+        <div class="share-options">
+<article class="share-option"><canvas id="share-board"></canvas><div class="share-actions"><button type="button" class="control primary" data-share-download="board">Save image</button><button type="button" class="control" data-share-native="board" hidden>Share image</button></div></article></div><p id="share-feedback" role="status"></p></section>
+    </main>
+
+    <footer>
+      <span>60 seconds per board</span>
+      <span>Type a word · F toggles fullscreen · Esc exits</span>
+    </footer>
+  </div>
+
+  <script id="share-image-renderer">
+function drawRoyalShare(canvas, summary) {
+  // Geometry, letter counts, and statuses only: no words, IDs, hints, or typed values.
+  const { solved, total, board, finished, secondsLeft, layout } = summary;
+  canvas.width = 1080; canvas.height = 1350;
+  const c = canvas.getContext('2d');
+  const ink='#372947', muted='#685575', brown='#95643e', green='#25815b', gray='#a6a6ab';
+  c.fillStyle='#fff8e9';c.fillRect(0,0,1080,1350);
+  const text=(t,x,y,size=32,color=ink,weight=600) => {c.fillStyle=color;c.font=weight+' '+size+'px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(t,x,y);};
+  text('ROYAL COURT',540,84,48,ink,800);
+  text('BOARD '+String(board).padStart(2,'0')+'  ·  60-SECOND PUZZLE',540,144,25,muted);
+  const scale=Math.min(960/layout.width,870/layout.height);
+  const ox=(1080-layout.width*scale)/2,oy=215+(870-layout.height*scale)/2;
+  const nodes=layout.nodes.map(n=>({...n,x:ox+n.x*layout.width*scale,y:oy+n.y*layout.height*scale,w:n.w*layout.width*scale,h:n.h*layout.height*scale}));
+  const rounded=(x,y,w,h,r,fill,stroke=null,line=2)=>{c.beginPath();c.roundRect(x,y,w,h,r);c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=line;c.stroke();}};
+  rounded(30,205,1020,900,42,'#d8c6e4');
+  rounded(30,197,1020,900,42,'#f1e8f8','#dfd0e8',3);
+  // Use the same parents and curved connections as the live board.
+  nodes.forEach(child=>child.parents.forEach(index=>{
+    const parent=nodes[index];
+    const down=child.y>=parent.y;
+    const sy=parent.y+(down?parent.h/2:-parent.h/2),ey=child.y+(down?-child.h/2:child.h/2);
+    const cy=sy+Math.sign(ey-sy||1)*Math.max(20*scale,Math.abs(ey-sy)*.55);
+    c.beginPath();c.moveTo(parent.x,sy);c.bezierCurveTo(parent.x,cy,child.x,cy,child.x,ey);
+    c.strokeStyle='#c6b8cb';c.lineWidth=3;c.setLineDash(child.kind==='queen'?[]:[8,9]);c.stroke();
+  }));
+  c.setLineDash([]);
+  nodes.forEach(n=>{
+    if(n.kind==='queen') {
+      rounded(n.x-56,n.y-38,112,82,30,'#352047');
+      rounded(n.x-56,n.y-44,112,82,30,'#67478e','#d6a72f',3);
+      c.fillStyle='#f4ce68';c.font='64px Georgia, serif';c.textAlign='center';c.textBaseline='middle';c.fillText('♛',n.x,n.y-2);return;
+    }
+    const color=n.kind==='clue'?brown:n.solved?green:gray;
+    const outline=n.kind==='clue'?'#734728':n.solved?'#186044':'#827e89';
+    const pale=n.kind==='clue'?'#fff0de':n.solved?'#e1f8e9':'#f6f3f8';
+    const x=n.x-n.w/2,y=n.y-n.h/2,r=Math.min(20,n.h*.28);
+    // Match the game's soft, raised speech bubbles and small tails.
+    rounded(x,y+6,n.w,n.h,r,outline);
+    rounded(x,y,n.w,n.h,r,color);
+    c.beginPath();c.moveTo(n.x-10,y+n.h-2);c.lineTo(n.x+10,y+n.h-2);c.lineTo(n.x,y+n.h+13);c.closePath();c.fillStyle=outline;c.fill();
+    c.beginPath();c.moveTo(n.x-8,y+n.h-4);c.lineTo(n.x+8,y+n.h-4);c.lineTo(n.x,y+n.h+8);c.closePath();c.fillStyle=color;c.fill();
+    // Every box is empty, even when that word was solved.
+    const count=n.letters,gap=Math.min(4,n.w*.022);
+    const boxW=Math.min(26,(n.w-24-gap*(count-1))/count),boxH=Math.min(34,boxW*1.65);
+    const left=n.x-(count*boxW+(count-1)*gap)/2;
+    for(let i=0;i<count;i++)rounded(left+i*(boxW+gap),n.y-boxH/2,boxW,boxH,Math.min(5,boxW*.24),'rgba(255,255,255,.1)',pale,1.6);
+
+  });
+  text(solved+' / '+total+' whispers solved',540,1140,44,ink,800);
+  text(finished?secondsLeft+'s left':'TIME’S UP',540,1210,finished?48:30,finished?green:muted,800);
+  const legend=[['Clues',brown],['Solved',green],['Unsolved',gray]];
+  legend.forEach(([label,color],i)=>{const x=300+i*240;rounded(x-85,1276,24,24,7,color);text(label,x+5,1288,24,muted,500);});
+  canvas.setAttribute('role','img');canvas.setAttribute('aria-label','Royal Court board '+board+': '+solved+' of '+total+' whispers solved'+(finished?', '+secondsLeft+' seconds left':', time’s up')+'. Original board layout. Brown clues, green solved answers, gray unsolved answers. Empty boxes show letter counts; no letters or words shown.');
+}
+  </script>
+  <script>
+    (() => {
+      const puzzles = [
+        {
+          id: 'court_rising',
+          kind: 'Royal court',
+          theme: 'court',
+          layoutType: 'rising',
+          tab: 'Rising council',
+          tag: '01 / Royal court · Rising council',
+          title: "The royal alibi",
+          description: "Start at the bottom. Follow the silly connections and make the Queen laugh.",
+          stageHeight: 720,
+          mobileStageHeight: 760,
+          nodes: [
+            { id: 'queen', type: 'queen', parents: ['a3'], x: 50, y: 2 },
+            { id: 'c1', type: 'clue', text: 'BEANS', x: 25, y: 83, mx: 25, my: 80 },
+            { id: 'c2', type: 'clue', text: 'BUTT', x: 75, y: 83, mx: 75, my: 80 },
+            { id: 'a1', type: 'answer', answer: "FART", parents: ['c1', 'c2'], x: 50, y: 65, my: 60, hint: "What beans can persuade your bottom to do.", joke: "The royal trumpeter has competition." },
+            { id: 'c3', type: 'clue', text: 'BLAME', x: 80, y: 65, my: 60 },
+            { id: 'a2', type: 'answer', answer: "DOG", parents: ['a1', 'c3'], x: 65, y: 46, my: 40, hint: "The four-legged suspect who gets blamed for every mysterious smell.", joke: "The only suspect who cannot defend himself." },
+            { id: 'c4', type: 'clue', text: 'HOMEWORK', x: 26, y: 46, my: 40 },
+            { id: 'a3', type: 'answer', answer: "EXCUSE", parents: ['a2', 'c4'], x: 45.5, y: 26, my: 20, hint: "“The dog ate my homework” is this classic attempt to get out of trouble.", joke: "The royal dog denies eating the homework." }
+          ]
+        },
+        {
+          id: 'court_wings',
+          kind: 'Royal court',
+          theme: 'court',
+          layoutType: 'wings',
+          tab: 'Two wings',
+          tag: '02 / Royal court · Two wings',
+          title: "A very formal bath",
+          description: "Solve both sides, then combine them. Her Majesty could use a laugh.",
+          stageHeight: 640,
+          mobileStageHeight: 660,
+          nodes: [
+            { id: 'queen', type: 'queen', parents: ['a3'], x: 50, y: 2 },
+            { id: 'c1', type: 'clue', text: 'SOAP', x: 12, y: 78, mx: 12, my: 78 },
+            { id: 'c2', type: 'clue', text: 'SINGING', x: 39, y: 78, mx: 37, my: 78 },
+            { id: 'a1', type: 'answer', answer: "SHOWER", parents: ['c1', 'c2'], x: 25.5, y: 54, mx: 24, my: 55, hint: "A place to get clean and perform a completely unrequested solo.", joke: "A concert with no audience. Ideally." },
+            { id: 'c3', type: 'clue', text: 'PENGUIN', x: 61, y: 78, mx: 63, my: 78 },
+            { id: 'c4', type: 'clue', text: 'GALA', x: 88, y: 78, mx: 88, my: 78 },
+            { id: 'a2', type: 'answer', answer: "TUXEDO", parents: ['c3', 'c4'], x: 74.5, y: 54, mx: 76, my: 55, hint: "Formal evening wear that a penguin seems to have on already.", joke: "The penguin was already dressed." },
+            { id: 'a3', type: 'answer', answer: "SOAKED", parents: ['a1', 'a2'], x: 50, y: 29, mx: 50, my: 29, hint: "How your fancy evening wear ends up if you wear it under running water.", joke: "The invitation said black tie, not bath time." }
+          ]
+        },
+        {
+          id: 'court_round',
+          kind: 'Royal court',
+          theme: 'court',
+          layoutType: 'round',
+          tab: 'Round table',
+          tag: '03 / Royal court · Round table',
+          title: "The court gets noisy",
+          description: "Find the funny link on each side, then bring the punchline to the Queen.",
+          stageHeight: 650,
+          mobileStageHeight: 680,
+          nodes: [
+            { id: 'queen', type: 'queen', parents: ['a3'], x: 50, y: 2 },
+            { id: 'c1', type: 'clue', text: 'PIG', x: 12, y: 34 },
+            { id: 'c2', type: 'clue', text: 'LAUGH', x: 12, y: 68 },
+            { id: 'a1', type: 'answer', answer: "SNORT", parents: ['c1', 'c2'], x: 34, y: 50, hint: "A pig does this. So do people who laugh through their noses.", joke: "Very dignified. Almost porcine." },
+            { id: 'c3', type: 'clue', text: 'DUCK', x: 88, y: 34 },
+            { id: 'c4', type: 'clue', text: 'DOCTOR', x: 88, y: 68 },
+            { id: 'a2', type: 'answer', answer: "QUACK", parents: ['c3', 'c4'], x: 66, y: 50, hint: "A duck says it. A terrible doctor gets called one.", joke: "Medical school was on a pond." },
+            { id: 'a3', type: 'answer', answer: "ZOO", parents: ['a1', 'a2'], x: 50, y: 25, hint: "A three-letter place where the neighbors make animal noises like these.", joke: "Her Majesty’s court is officially a zoo." }
+          ]
+        },
+        {
+          id: 'court_knight',
+          kind: 'Royal court',
+          theme: 'court',
+          layoutType: 'wings',
+          tab: 'Brave knight',
+          tag: '04 / Royal court · Brave knight',
+          title: "The cowardly hero",
+          description: "Help the royal champion prepare for battle... or execute a strategic retreat.",
+          stageHeight: 640,
+          mobileStageHeight: 660,
+          nodes: [
+            { id: 'queen', type: 'queen', parents: ['a3'], x: 50, y: 2 },
+            { id: 'c1', type: 'clue', text: 'GHOST', x: 12, y: 78, mx: 12, my: 78 },
+            { id: 'c2', type: 'clue', text: 'BABY', x: 39, y: 78, mx: 37, my: 78 },
+            { id: 'a1', type: 'answer', answer: "SCREAM", parents: ['c1', 'c2'], x: 25.5, y: 54, mx: 24, my: 55, hint: "A spooky ghost makes you do it, and a baby does it at 3 AM.", joke: "Vocal warmups for the royal championship." },
+            { id: 'c3', type: 'clue', text: 'RABBIT', x: 61, y: 78, mx: 63, my: 78 },
+            { id: 'c4', type: 'clue', text: 'TREADMILL', x: 88, y: 78, mx: 88, my: 78 },
+            { id: 'a2', type: 'answer', answer: "RUN", parents: ['c3', 'c4'], x: 74.5, y: 54, mx: 76, my: 55, hint: "What a startled bunny does, and the only thing you do on a treadmill.", joke: "A tactical retrograde advance on foot." },
+            { id: 'a3', type: 'answer', answer: "PANIC", parents: ['a1', 'a2'], x: 50, y: 29, mx: 50, my: 29, hint: "What you are definitely doing if you scream and run simultaneously.", joke: "The royal guard’s signature battle maneuver: full panic." }
+          ]
+        },
+        {
+          id: 'court_snooze',
+          kind: 'Royal court',
+          theme: 'court',
+          layoutType: 'rising',
+          tab: 'Morning court',
+          tag: '05 / Royal court · Morning court',
+          title: "The alarm clock incident",
+          description: "Trace the morning catastrophe that ends with Her Majesty’s royal judgment.",
+          stageHeight: 720,
+          mobileStageHeight: 760,
+          nodes: [
+            { id: 'queen', type: 'queen', parents: ['a3'], x: 50, y: 2 },
+            { id: 'c1', type: 'clue', text: 'ALARM', x: 25, y: 83, mx: 25, my: 80 },
+            { id: 'c2', type: 'clue', text: 'PILLOW', x: 75, y: 83, mx: 75, my: 80 },
+            { id: 'a1', type: 'answer', answer: "SNOOZE", parents: ['c1', 'c2'], x: 50, y: 65, my: 60, hint: "The tempting button you hit when the alarm interrupts your pillow.", joke: "Nine minutes of glorious, defiant rebellion." },
+            { id: 'c3', type: 'clue', text: 'CLOCK', x: 80, y: 65, my: 60 },
+            { id: 'a2', type: 'answer', answer: "LATE", parents: ['a1', 'c3'], x: 65, y: 46, my: 40, hint: "What hitting snooze repeatedly guarantees you will be.", joke: "Punctuality is merely a polite suggestion." },
+            { id: 'c4', type: 'clue', text: 'BOSS', x: 26, y: 46, my: 40 },
+            { id: 'a3', type: 'answer', answer: "FIRED", parents: ['a2', 'c4'], x: 45.5, y: 26, my: 20, hint: "What happens when you arrive three hours late to report to the boss.", joke: "Her Majesty officially declares you unemployed." }
+          ]
+        },
+        {
+          id: 'court_snack',
+          kind: 'Royal court',
+          theme: 'court',
+          layoutType: 'wings',
+          tab: 'Midnight raid',
+          tag: '06 / Royal court · Midnight raid',
+          title: "The crumb detective",
+          description: "Someone raided the royal pantry at 1 AM. Trace the culinary crime.",
+          stageHeight: 640,
+          mobileStageHeight: 660,
+          nodes: [
+            { id: 'queen', type: 'queen', parents: ['a3'], x: 50, y: 2 },
+            { id: 'c1', type: 'clue', text: 'MIDNIGHT', x: 12, y: 78, mx: 12, my: 78 },
+            { id: 'c2', type: 'clue', text: 'FRIDGE', x: 39, y: 78, mx: 37, my: 78 },
+            { id: 'a1', type: 'answer', answer: "SNACK", parents: ['c1', 'c2'], x: 25.5, y: 54, mx: 24, my: 55, hint: "A stealthy bite to eat in the glow of the open refrigerator.", joke: "A top-secret covert raid on the pantry." },
+            { id: 'c3', type: 'clue', text: 'COOKIE', x: 61, y: 78, mx: 63, my: 78 },
+            { id: 'c4', type: 'clue', text: 'JAR', x: 88, y: 78, mx: 88, my: 78 },
+            { id: 'a2', type: 'answer', answer: "CRUMB", parents: ['c3', 'c4'], x: 74.5, y: 54, mx: 76, my: 55, hint: "The tiny crunchy evidence scattered on your shirt and pillow.", joke: "Forensic evidence of delicious crimes." },
+            { id: 'a3', type: 'answer', answer: "CAUGHT", parents: ['a1', 'a2'], x: 50, y: 29, mx: 50, my: 29, hint: "What you are when the kitchen light flips on and your mouth is full.", joke: "Busted in your royal slippers by Her Majesty herself." }
+          ]
+        },
+        {
+          id: 'court_choir',
+          kind: 'Royal court',
+          theme: 'court',
+          layoutType: 'round',
+          tab: 'Castle choir',
+          tag: '07 / Royal court · Castle choir',
+          title: "The royal racket",
+          description: "Listen to the awful sounds echoing through the grand corridors.",
+          stageHeight: 650,
+          mobileStageHeight: 680,
+          nodes: [
+            { id: 'queen', type: 'queen', parents: ['a3'], x: 50, y: 2 },
+            { id: 'c1', type: 'clue', text: 'DONKEY', x: 12, y: 34 },
+            { id: 'c2', type: 'clue', text: 'CAR', x: 12, y: 68 },
+            { id: 'a1', type: 'answer', answer: "HONK", parents: ['c1', 'c2'], x: 34, y: 50, hint: "A donkey bray sounds like this, and you press the steering wheel to do it.", joke: "Very musical. Like a traffic jam in a barn." },
+            { id: 'c3', type: 'clue', text: 'BELL', x: 88, y: 34 },
+            { id: 'c4', type: 'clue', text: 'TELEPHONE', x: 88, y: 68 },
+            { id: 'a2', type: 'answer', answer: "RING", parents: ['c3', 'c4'], x: 66, y: 50, hint: "A church bell does it, and an old-fashioned telephone does too.", joke: "Incoming royal call on line one." },
+            { id: 'a3', type: 'answer', answer: "NOISE", parents: ['a1', 'a2'], x: 50, y: 25, hint: "What honking and ringing make when combined all morning.", joke: "The royal orchestra has been dismissed indefinitely." }
+          ]
+        }
+      ];
+      const round = { phase: 'ready', deadline: 0, remaining: 60000, interval: null, reviewing: false };
+      const state = {
+        active: 0,
+        display: 'court-app',
+        solved: Object.fromEntries(puzzles.map(p => [p.id, new Set()])),
+        values: Object.fromEntries(puzzles.map(p => [p.id, {}])),
+        hinted: Object.fromEntries(puzzles.map(p => [p.id, new Set()])),
+        message: 'Choose any available empty word.'
+      };
+
+      const els = {
+        tabs: document.getElementById('puzzle-tabs'),
+        tag: document.getElementById('puzzle-tag'),
+        title: document.getElementById('puzzle-title'),
+        description: document.getElementById('puzzle-description'),
+        progress: document.getElementById('progress-number'),
+        stage: document.getElementById('stage'),
+        canvas: document.getElementById('wire-canvas'),
+        status: document.getElementById('status'),
+        hint: document.getElementById('hint-button'),
+        reset: document.getElementById('reset-button'),
+        fullscreen: document.getElementById('fullscreen-button'),
+        displayOptions: Array.from(document.querySelectorAll('[data-display-option]')),
+        announcer: document.getElementById('queen-announcer'),
+        announcerLabel: document.getElementById('announcer-label'),
+        announcerWord: document.getElementById('announcer-word')
+      };
+
+      const avatarColors = ['#f1b83d', '#ee7b78', '#71bfa7', '#8fa9e8', '#b38ad4', '#e98fb6'];
+      const avatarHair = ['#5d3d2d', '#3e2b48', '#7a4b28', '#233a59', '#613a68', '#43312c'];
+      const avatarSkin = ['#f0bd93', '#8f5d45', '#d99a72', '#6f4436', '#efc6a6', '#b97858'];
+      const avatarRobe = ['#4d7f9d', '#865394', '#3f8c79', '#ba6659', '#6578ad', '#b07336'];
+
+      function advisorAvatar(index) {
+        const variant = index % 6;
+        const hair = [
+          '<path d="M18 36c0-18 8-27 20-27 13 0 21 9 21 28-6-7-13-10-21-10-7 0-14 3-20 9Z" fill="var(--avatar-hair)"/><path d="M20 29c4-11 11-16 20-16 8 0 15 5 18 15-9-5-25-5-38 1Z" fill="var(--avatar-hair)"/>',
+          '<path d="M15 39c0-20 10-31 24-31s24 11 24 31v16c-5 8-10 12-14 13l-1-35c-6-6-13-8-21-3l1 38c-8-4-13-14-13-29Z" fill="var(--avatar-hair)"/><path d="M20 29c8-15 27-18 38 0-13-5-25-5-38 0Z" fill="var(--avatar-hair)"/>',
+          '<path d="M17 39c-7-7-3-15 3-16-5-8 4-15 10-12 1-9 13-10 17-3 7-5 16 3 13 10 9 1 10 13 3 17l-6 5-36 2Z" fill="var(--avatar-hair)"/><circle cx="18" cy="44" r="7" fill="var(--avatar-hair)"/><circle cx="59" cy="44" r="7" fill="var(--avatar-hair)"/>',
+          '<path d="M18 34c2-17 10-25 21-25 12 0 20 8 22 25-7-6-14-9-22-9s-15 3-21 9Z" fill="var(--avatar-hair)"/><path d="m18 25 7-12 5 8 9-14 7 14 8-10 7 15c-14-4-29-4-43-1Z" fill="var(--avatar-hair)"/>',
+          '<circle cx="52" cy="12" r="11" fill="var(--avatar-hair)" stroke="#372947" stroke-width="2"/><path d="M17 36c1-18 9-27 22-27 12 0 20 9 21 28-6-7-13-10-21-10-9 0-16 3-22 9Z" fill="var(--avatar-hair)"/>',
+          '<path d="M17 38c0-20 9-30 22-30 14 0 23 11 23 31-7-8-14-12-23-12-8 0-15 4-22 11Z" fill="var(--avatar-hair)"/><path d="M17 33c-5 12-4 25 4 35M23 31c-4 14-2 27 3 37M57 32c4 12 3 25-4 36" fill="none" stroke="var(--avatar-hair)" stroke-width="6" stroke-linecap="round"/>'
+        ][variant];
+        const accessory = [
+          '<g fill="none" stroke="#372947" stroke-width="2"><circle cx="31" cy="42" r="6"/><circle cx="47" cy="42" r="6"/><path d="M37 42h4"/></g>',
+          '<g fill="#f3bd3d" stroke="#372947" stroke-width="1.5"><circle cx="20" cy="51" r="3"/><circle cx="58" cy="51" r="3"/></g>',
+          '<g fill="none" stroke="#372947" stroke-width="2"><circle cx="48" cy="42" r="7"/><path d="M55 47l5 14"/></g>',
+          '<path d="M31 54q8-7 16 0-4 2-8 0-4 2-8 0Z" fill="var(--avatar-hair)"/>',
+          '<path d="M20 26q19-13 38 0" fill="none" stroke="#f3bd3d" stroke-width="3"/><circle cx="39" cy="19" r="3" fill="#ef7792" stroke="#372947" stroke-width="1.5"/>',
+          '<path d="M52 16q10-17 14-11-1 8-12 18" fill="#fff3c6" stroke="#372947" stroke-width="2"/><path d="M57 12 51 25" stroke="#372947" stroke-width="2"/>'
+        ][variant];
+        return `
+          <span class="advisor-avatar" aria-hidden="true">
+            <svg viewBox="0 0 78 88">
+              <circle cx="39" cy="37" r="34" fill="var(--avatar)" stroke="#372947" stroke-width="2.5"/>
+              <path d="M6 87c2-18 14-28 33-28s31 10 33 28Z" fill="var(--avatar-robe)" stroke="#372947" stroke-width="2.5"/>
+              <path d="M27 64 39 76 51 64l7 8-8 15H28l-8-15Z" fill="#fff7df" stroke="#372947" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M33 55v11h12V55" fill="var(--avatar-skin)" stroke="#372947" stroke-width="2"/>
+              ${hair}
+              <circle cx="20" cy="43" r="4.5" fill="var(--avatar-skin)" stroke="#372947" stroke-width="1.5"/>
+              <circle cx="58" cy="43" r="4.5" fill="var(--avatar-skin)" stroke="#372947" stroke-width="1.5"/>
+              <circle cx="39" cy="41" r="21" fill="var(--avatar-skin)" stroke="#372947" stroke-width="2"/>
+              ${variant === 1 ? '<path d="M22 31c6-11 27-17 35 0-13-5-23-5-35 0Z" fill="var(--avatar-hair)"/>' : ''}
+              ${variant === 2 ? '<path d="M21 31c5-9 11-13 18-13 8 0 14 4 19 13-12-4-25-4-37 0Z" fill="var(--avatar-hair)"/>' : ''}
+              <path d="M27 39q4-3 8 0M43 39q4-3 8 0" fill="none" stroke="#372947" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="31" cy="42" r="1.7" fill="#372947"/>
+              <circle cx="47" cy="42" r="1.7" fill="#372947"/>
+              <path d="M39 44v6l3 1" fill="none" stroke="#7d4b3d" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M33 56c4 3 8 3 12 0" fill="none" stroke="#a94f65" stroke-width="2.2" stroke-linecap="round"/>
+              ${accessory}
+              <circle cx="39" cy="79" r="3.5" fill="var(--avatar)" stroke="#372947" stroke-width="1.5"/>
+            </svg>
+          </span>`;
+      }
+
+      function queenCharacter(laughing = false) {
+        return `
+          <span class="queen-character" aria-hidden="true">
+            <svg viewBox="0 0 80 92">
+              <circle cx="40" cy="39" r="33" fill="#7655a4" stroke="#f0cb67" stroke-width="2.5"/>
+              <path d="M8 91c2-19 14-29 32-29s30 10 32 29Z" fill="#3f2858" stroke="#24192e" stroke-width="2.5"/>
+              <path d="M28 65 40 77 52 65l7 8-9 18H30l-9-18Z" fill="#fff3c6" stroke="#372947" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M34 57v11h12V57" fill="#c98462" stroke="#372947" stroke-width="2"/>
+              <path d="M17 39c0-18 9-28 23-28s23 10 23 28v18c-6 8-14 12-23 12S23 65 17 57Z" fill="#4b2f52"/>
+              <circle cx="40" cy="42" r="21" fill="#d9a07e" stroke="#372947" stroke-width="2"/>
+              <path d="M20 38c2-18 10-25 21-25 13 0 21 9 21 27-6-8-13-12-22-12-8 0-14 3-20 10Z" fill="#4b2f52"/>
+              <path d="M18 23 23 5l17 14L57 5l5 18Z" fill="#f3bd3d" stroke="#4a3523" stroke-width="2.5" stroke-linejoin="round"/>
+              <circle cx="23" cy="6" r="3" fill="#ef7792" stroke="#4a3523" stroke-width="1.5"/><circle cx="40" cy="18" r="3" fill="#ef7792" stroke="#4a3523" stroke-width="1.5"/><circle cx="57" cy="6" r="3" fill="#ef7792" stroke="#4a3523" stroke-width="1.5"/>
+              <path d="M28 43q4-3 8 0M44 43q4-3 8 0" fill="none" stroke="#372947" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="32" cy="44" r="1.7" fill="#372947"/><circle cx="48" cy="44" r="1.7" fill="#372947"/>
+              <path d="M40 46v6l3 1" fill="none" stroke="#9d654d" stroke-width="1.6" stroke-linecap="round"/>
+              ${laughing ? '<path d="M31 53h18c0 12-18 12-18 0Z" fill="#572c40" stroke="#a94f65" stroke-width="1.5"/><path d="M34 54h12v3H34Z" fill="#fff8e9"/>' : '<path d="M33 57c4 4 10 4 14 0" fill="none" stroke="#a94f65" stroke-width="2.5" stroke-linecap="round"/>'}
+              <circle cx="40" cy="79" r="4" fill="#ef7792" stroke="#372947" stroke-width="1.5"/>
+            </svg>
+          </span>`;
+      }
+
+      function clean(value) {
+        return String(value || '').toUpperCase().replace(/[^A-Z]/g, '');
+      }
+
+      function currentPuzzle() {
+        return puzzles[state.active];
+      }
+
+      function nodeById(puzzle, id) {
+        return puzzle.nodes.find(node => node.id === id);
+      }
+
+      function isSolved(puzzle, node) {
+        return node.type === 'clue' || node.type === 'given' || node.type === 'queen' || state.solved[puzzle.id].has(node.id);
+      }
+
+      function isUnlocked(puzzle, node) {
+        if (node.type !== 'answer') return true;
+        if (!node.parents || node.parents.length === 0) return true;
+        return node.parents.every(parentId => isSolved(puzzle, nodeById(puzzle, parentId)));
+      }
+
+      function answerNodes(puzzle) {
+        return puzzle.nodes.filter(node => node.type === 'answer');
+      }
+
+      function createTabs() {
+        els.tabs.innerHTML = puzzles.map((puzzle, index) => {
+          const solved = state.solved[puzzle.id].size === answerNodes(puzzle).length;
+          return `
+            <button class="tab${solved ? ' is-solved' : ''}" type="button" role="tab" aria-selected="${index === state.active}" aria-controls="stage" data-tab="${index}" data-kind="${puzzle.kind || 'Wordplay'}">
+              <span class="tab-number">${String(index + 1).padStart(2, '0')}${solved ? ' ✓' : ''}</span>
+              <span class="tab-kind">${puzzle.kind || 'Wordplay'}</span>
+              <span class="tab-name">${puzzle.tab}</span>
+            </button>
+          `;
+        }).join('');
+
+        els.tabs.querySelectorAll('[data-tab]').forEach(button => {
+          button.addEventListener('click', () => {
+            const nextTab = Number(button.dataset.tab);
+            if (nextTab === state.active) return;
+            if (round.phase === 'running') {
+              clearInterval(round.interval);
+              round.interval = null;
+            }
+            state.active = nextTab;
+            prepareRound();
+            state.message = 'Choose any available empty word.';
+            render();
+            createTabs();
+          });
+        });
+
+        const selected = els.tabs.querySelector(`[data-tab="${state.active}"]`);
+        if (selected) els.tabs.scrollLeft = Math.max(0, selected.offsetLeft - (els.tabs.clientWidth - selected.offsetWidth) / 2);
+      }
+
+      function createNode(puzzle, node, index) {
+        const solved = isSolved(puzzle, node);
+        const unlocked = isUnlocked(puzzle, node);
+        const announcedNode = node.type === 'queen' ? nodeById(puzzle, node.parents?.[0]) : null;
+        const laughter = state.solved[puzzle.id].size;
+        const heard = Boolean(announcedNode && state.solved[puzzle.id].has(announcedNode.id));
+        const nodeEl = document.createElement('div');
+        const avatarSide = (node.mx ?? node.x) > 52 ? 'avatar-left' : 'avatar-right';
+        nodeEl.className = `node ${node.type}${node.type !== 'queen' ? ` ${avatarSide}` : ''}${solved && node.type === 'answer' ? ' solved' : ''}${!unlocked ? ' locked' : ''}${state.hinted[puzzle.id].has(node.id) ? ' hinted' : ''}${heard ? ' heard' : ''}`;
+        nodeEl.dataset.node = node.id;
+        nodeEl.style.setProperty('--x', node.x);
+        nodeEl.style.setProperty('--y', node.y);
+        nodeEl.style.setProperty('--mx', node.mx ?? node.x);
+        nodeEl.style.setProperty('--my', node.my ?? node.y);
+        nodeEl.style.setProperty('--order', index);
+        nodeEl.style.setProperty('--avatar', avatarColors[index % avatarColors.length]);
+        nodeEl.style.setProperty('--avatar-hair', avatarHair[index % avatarHair.length]);
+        nodeEl.style.setProperty('--avatar-skin', avatarSkin[index % avatarSkin.length]);
+        nodeEl.style.setProperty('--avatar-robe', avatarRobe[index % avatarRobe.length]);
+        nodeEl.addEventListener('animationend', scheduleWireRedraw);
+
+        if (node.type === 'queen') {
+          nodeEl.setAttribute('aria-label', heard ? `The Queen laughs at ${announcedNode.answer}` : 'Make the Queen laugh');
+          nodeEl.innerHTML = `
+            <span class="queen-crown" aria-hidden="true">♛</span>
+            ${queenCharacter(heard)}
+            
+            <span class="queen-hears">${heard ? 'Ha ha ha!' : laughter >= 2 ? 'A chuckle…' : laughter === 1 ? 'A smirk…' : 'Amuse me.'}</span>
+          `;
+          return nodeEl;
+        }
+
+        if (node.type === 'clue' || node.type === 'given') {
+          nodeEl.innerHTML = `
+            ${node.type === 'given' ? `<span class="node-kicker">${node.label || 'given answer'}</span>` : ''}
+            
+            <span class="${node.type === 'given' ? 'given-word' : 'clue-word'}">${node.text}</span>
+            ${advisorAvatar(index)}
+          `;
+          return nodeEl;
+        }
+
+        const value = solved ? node.answer : (state.values[puzzle.id][node.id] || '');
+        const chars = Array.from({ length: node.answer.length }, (_, i) => value[i] || '').map(char => `<span class="cell">${char}</span>`).join('');
+        nodeEl.style.setProperty('--letters', node.answer.length);
+        const answerLabel = puzzle.theme === 'court' ? (solved ? 'whispered' : 'your whisper') : (solved ? 'solved' : 'your word');
+        nodeEl.innerHTML = `
+          
+          <div class="cells" aria-hidden="true">${chars}</div>
+          ${node.prompt && !solved ? `<p class="node-prompt">${node.prompt}</p>` : ''}
+          <input class="node-input" aria-label="${node.prompt || `Answer with ${node.answer.length} letters`}" value="${value}" maxlength="${node.answer.length}" autocomplete="off" autocapitalize="characters" spellcheck="false" ${!unlocked || solved || round.phase !== 'running' ? 'disabled' : ''}>
+          ${advisorAvatar(index)}
+        `;
+
+        const input = nodeEl.querySelector('input');
+        if (input) {
+          input.addEventListener('input', event => handleInput(event, puzzle, node, nodeEl));
+          input.addEventListener('keydown', event => {
+            if (event.key === 'Enter') checkAnswer(puzzle, node, nodeEl, clean(input.value));
+          });
+        }
+        return nodeEl;
+      }
+
+      function handleInput(event, puzzle, node, nodeEl) {
+        if (!acceptingAnswers()) return;
+        const value = clean(event.target.value).slice(0, node.answer.length);
+        event.target.value = value;
+        state.values[puzzle.id][node.id] = value;
+        nodeEl.querySelectorAll('.cell').forEach((cell, index) => { cell.textContent = value[index] || ''; });
+        nodeEl.classList.remove('wrong');
+        if (value === node.answer) checkAnswer(puzzle, node, nodeEl, value);
+        else if (value.length === node.answer.length) {
+          nodeEl.classList.add('wrong');
+          setMessage(`“${value}” does not connect every feeder. Try another ${node.answer.length}-letter word.`);
+          window.setTimeout(() => nodeEl.classList.remove('wrong'), 320);
+        }
+      }
+
+      function checkAnswer(puzzle, node, nodeEl, value) {
+        if (!acceptingAnswers() || !isUnlocked(puzzle, node) || value !== node.answer || state.solved[puzzle.id].has(node.id)) return;
+        state.solved[puzzle.id].add(node.id);
+        state.values[puzzle.id][node.id] = node.answer;
+        const complete = state.solved[puzzle.id].size === answerNodes(puzzle).length;
+        state.message = complete
+          ? (puzzle.theme === 'court' ? `The Queen laughs! ${node.joke}` : `Board complete — every path converges.`)
+          : `${node.answer}! ${node.joke}`;
+        if (complete) finishRound('won');
+        render();
+        if (complete) createTabs();
+        const solvedEl = els.stage.querySelector(`[data-node="${node.id}"]`);
+        if (solvedEl) solvedEl.focus?.();
+        if (complete) celebrate();
+        else els.stage.querySelector('input:not(:disabled)')?.focus({ preventScroll: true });
+      }
+
+      function setMessage(message, success = false) {
+        state.message = message;
+        els.status.textContent = message;
+        els.status.classList.toggle('success', success);
+      }
+
+      function render() {
+        const puzzle = currentPuzzle();
+        const answers = answerNodes(puzzle);
+        const solvedCount = state.solved[puzzle.id].size;
+        els.tag.textContent = puzzle.tag;
+        els.title.textContent = puzzle.title;
+        els.description.textContent = puzzle.description;
+        els.progress.textContent = `${solvedCount} / ${answers.length}`;
+        document.documentElement.dataset.display = state.display;
+        els.displayOptions.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.displayOption === state.display)));
+        const hasBoardQueen = puzzle.nodes.some(node => node.type === 'queen');
+        const complete = solvedCount === answers.length;
+        const finalAnswer = answers[answers.length - 1];
+        els.announcer.hidden = state.display !== 'court-app' || hasBoardQueen;
+        els.announcer.classList.toggle('heard', complete);
+        els.announcerLabel.textContent = complete ? 'The Queen laughs!' : 'Her Majesty needs a laugh';
+        els.announcerWord.textContent = complete ? `“${finalAnswer.answer}!”` : 'Solve the final whisper';
+        els.stage.style.setProperty('--stage-h', `${puzzle.stageHeight}px`);
+        els.stage.style.setProperty('--stage-h-mobile', `${puzzle.mobileStageHeight || puzzle.stageHeight}px`);
+        els.stage.dataset.puzzle = puzzle.id;
+        els.stage.dataset.layout = puzzle.layoutType || (puzzle.id.includes('wings') || puzzle.id.includes('knight') || puzzle.id.includes('snack') ? 'wings' : puzzle.id.includes('round') || puzzle.id.includes('choir') ? 'round' : 'rising');
+        els.stage.dataset.theme = puzzle.theme || '';
+        els.stage.setAttribute('aria-label', `${puzzle.title}. ${solvedCount} of ${answers.length} links solved.`);
+        els.stage.querySelectorAll('.node, .stage-flash').forEach(node => node.remove());
+        puzzle.nodes.forEach((node, index) => els.stage.appendChild(createNode(puzzle, node, index)));
+        els.status.textContent = state.message;
+        els.status.classList.toggle('success', solvedCount === answers.length);
+        els.tabs.querySelectorAll('[data-tab]').forEach((tab, index) => tab.setAttribute('aria-selected', String(index === state.active)));
+        updateTimerUI();
+        scheduleWireRedraw();
+        window.setTimeout(scheduleWireRedraw, 120);
+        window.setTimeout(scheduleWireRedraw, 520);
+      }
+
+      let wireFrame = 0;
+      function scheduleWireRedraw() {
+        cancelAnimationFrame(wireFrame);
+        wireFrame = requestAnimationFrame(() => {
+          wireFrame = requestAnimationFrame(drawWires);
+        });
+      }
+
+      function drawWires() {
+        const puzzle = currentPuzzle();
+        const canvas = els.canvas;
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.round(rect.width * dpr);
+        canvas.height = Math.round(rect.height * dpr);
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+        ctx.lineCap = 'round';
+        const styles = getComputedStyle(document.documentElement);
+        const path = styles.getPropertyValue('--path').trim();
+        const faint = styles.getPropertyValue('--path-faint').trim();
+        const royal = styles.getPropertyValue('--royal').trim();
+
+        puzzle.nodes.forEach(child => {
+          if (!child.parents) return;
+          const childEl = els.stage.querySelector(`[data-node="${child.id}"]`);
+          if (!childEl) return;
+          const childRect = childEl.getBoundingClientRect();
+          child.parents.forEach(parentId => {
+            const parent = nodeById(puzzle, parentId);
+            const parentEl = els.stage.querySelector(`[data-node="${parentId}"]`);
+            if (!parentEl) return;
+            const parentRect = parentEl.getBoundingClientRect();
+            const startX = parentRect.left - rect.left + parentRect.width / 2;
+            const endX = childRect.left - rect.left + childRect.width / 2;
+            const goesDown = childRect.top + childRect.height / 2 >= parentRect.top + parentRect.height / 2;
+            const startY = goesDown ? parentRect.bottom - rect.top - 1 : parentRect.top - rect.top + 1;
+            const endY = goesDown ? childRect.top - rect.top + 1 : childRect.bottom - rect.top - 1;
+            const deltaY = endY - startY;
+            const controlY = startY + Math.sign(deltaY || 1) * Math.max(20, Math.abs(deltaY) * .55);
+            const active = isSolved(puzzle, parent);
+            const announcement = puzzle.theme === 'court' && child.type === 'queen';
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.bezierCurveTo(startX, controlY, endX, controlY, endX, endY);
+            ctx.setLineDash(puzzle.theme === 'court' && !announcement ? [5, 7] : []);
+            ctx.strokeStyle = announcement && active ? royal : (active ? path : faint);
+            ctx.globalAlpha = active ? .9 : 1;
+            ctx.lineWidth = announcement && active ? 4 : (active && state.solved[puzzle.id].has(child.id) ? 3 : 2);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+            ctx.setLineDash([]);
+          });
+        });
+      }
+
+      function hint() {
+        if (!acceptingAnswers()) return;
+        const puzzle = currentPuzzle();
+        const target = answerNodes(puzzle).find(node => !state.solved[puzzle.id].has(node.id) && isUnlocked(puzzle, node));
+        if (!target) {
+          setMessage(state.solved[puzzle.id].size === answerNodes(puzzle).length ? 'Nothing left to hint — this board is complete.' : 'Finish the available word before asking about the next link.', true);
+          return;
+        }
+
+        if (!state.hinted[puzzle.id].has(target.id)) {
+          state.hinted[puzzle.id].add(target.id);
+          state.message = `Hint for ${target.answer.length} letters: ${target.hint || 'Look for the feeling or quality these clues share.'}`;
+          render();
+          return;
+        }
+
+        state.values[puzzle.id][target.id] = target.answer[0];
+        state.message = `First letter placed: ${target.answer[0]}. ${target.hint || 'Look for the feeling or quality these clues share.'}`;
+        render();
+        const input = els.stage.querySelector(`[data-node="${target.id}"] input`);
+        input?.focus();
+        input?.setSelectionRange(1, 1);
+      }
+
+      function reset() {
+        prepareRound();
+        const puzzle = currentPuzzle();
+        state.solved[puzzle.id].clear();
+        state.values[puzzle.id] = {};
+        state.hinted[puzzle.id].clear();
+        state.message = 'Press Start for a fresh 60-second round.';
+        render();
+      }
+
+      function celebrate() {
+        const particles = [
+          [50, 50, -92, -76], [50, 50, 78, -82], [50, 50, -130, -20], [50, 50, 122, -12],
+          [50, 50, -70, 72], [50, 50, 64, 84], [50, 50, -16, -116], [50, 50, 18, 110]
+        ];
+        particles.forEach(([x, y, dx, dy], index) => {
+          const spark = document.createElement('i');
+          spark.className = 'stage-flash';
+          spark.style.left = `${x}%`;
+          spark.style.top = `${y}%`;
+          spark.style.setProperty('--dx', `${dx}px`);
+          spark.style.setProperty('--dy', `${dy}px`);
+          spark.style.animationDelay = `${index * 35}ms`;
+          els.stage.appendChild(spark);
+          window.setTimeout(() => spark.remove(), 1200);
+        });
+      }
+
+      async function toggleFullscreen() {
+        if (!document.fullscreenElement) await document.documentElement.requestFullscreen?.();
+        else await document.exitFullscreen?.();
+      }
+
+      function renderGameToText() {
+        const puzzle = currentPuzzle();
+        return JSON.stringify({
+          mode: 'royal-court-timed',
+          timer: { phase: round.phase, remainingMs: round.remaining },
+          puzzle: { id: puzzle.id, kind: puzzle.kind || 'Wordplay', title: puzzle.title, number: state.active + 1, total: puzzles.length },
+          display: state.display,
+          progress: { solved: state.solved[puzzle.id].size, total: answerNodes(puzzle).length },
+          message: state.message,
+          coordinateSystem: 'Node x/y values are percentages from the top-left of the visible stage; y increases downward.',
+          nodes: puzzle.nodes.map(node => ({
+            id: node.id,
+            type: node.type,
+            shown: node.type === 'answer'
+              ? (state.solved[puzzle.id].has(node.id) ? node.answer : state.values[puzzle.id][node.id] || '')
+              : (node.type === 'queen' ? (state.solved[puzzle.id].has(node.parents?.[0]) ? nodeById(puzzle, node.parents[0]).answer : '') : node.text),
+            letters: node.answer?.length,
+            parents: node.parents || [],
+            unlocked: isUnlocked(puzzle, node),
+            solved: isSolved(puzzle, node),
+            x: node.x,
+            y: node.y
+          }))
+        });
+      }
+
+      function prepareRound() {
+        document.getElementById('share-results').hidden = true;
+        document.getElementById('share-feedback').textContent = '';
+        clearInterval(round.interval);
+        Object.assign(round, { phase: 'ready', remaining: 60000, deadline: 0, interval: null, reviewing: false });
+        const p = currentPuzzle();
+        state.solved[p.id].clear(); state.values[p.id] = {}; state.hinted[p.id].clear();
+      }
+      function startRound() {
+        if (round.phase === 'running') return;
+        prepareRound();
+        round.phase = 'running';
+        round.deadline = Date.now() + 60000;
+        state.message = 'Find the funny connection. Each answer becomes the next clue.';
+        round.interval = setInterval(tick, 100);
+        render();
+        els.stage.querySelector('input:not(:disabled)')?.focus({ preventScroll: true });
+      }
+      function acceptingAnswers() {
+        if (round.phase !== 'running') return false;
+        if (Date.now() >= round.deadline) { tick(); return false; }
+        return true;
+      }
+      function tick() {
+        if (round.phase !== 'running') return;
+        round.remaining = Math.max(0, round.deadline - Date.now());
+        if (!round.remaining) finishRound('expired');
+        else updateTimerUI();
+      }
+      function finishRound(phase) {
+        round.remaining = Math.max(0, round.deadline - Date.now());
+        round.phase = phase;
+        clearInterval(round.interval); round.interval = null;
+        if (phase === 'expired') state.message = 'Time’s up. Your answers are locked. Review the board or try again.';
+        render();
+        renderShareResults();
+      }
+      function updateTimerUI() {
+        const seconds = Math.ceil(round.remaining / 1000);
+        const timer = document.getElementById('timer');
+        timer.textContent = Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0');
+        timer.setAttribute('aria-label', seconds + ' seconds remaining');
+        timer.classList.toggle('urgent', seconds <= 10 && round.phase === 'running');
+        document.getElementById('timer-fill').style.width = (round.remaining / 600) + '%';
+        const running = round.phase === 'running';
+        const ready = round.phase === 'ready';
+        const won = round.phase === 'won';
+        const score = state.solved[currentPuzzle().id].size + ' / ' + answerNodes(currentPuzzle()).length;
+        const hints = state.hinted[currentPuzzle().id].size;
+        const message = ready ? 'Choose a board, then start your minute.' : running ? (state.solved[currentPuzzle().id].size ? state.message : 'Make the Queen laugh.') : won ? 'You made the Queen laugh! ' + score + ' solved · ' + hints + ' hints used.' : 'Time’s up! ' + score + ' solved · ' + hints + ' hints used.';
+        const status = document.getElementById('round-status');
+        if (status.textContent !== message) status.textContent = message;
+        const start = document.getElementById('start-button');
+        start.disabled = running; start.textContent = running ? 'Round in progress' : ready ? 'Start 60 seconds' : 'Try again · 60s';
+        els.hint.disabled = !running;
+        const cover = document.getElementById('round-cover');
+        cover.hidden = running || won || round.reviewing;
+        document.getElementById('cover-title').textContent = ready ? 'Make the Queen laugh.' : 'Time’s up!';
+        document.getElementById('cover-copy').textContent = ready ? 'Each odd pair leads to a funny connection. Solve your way to the punchline in 60 seconds.' : score + ' whispers solved. Review your board, or take another minute.';
+        document.getElementById('cover-start').textContent = ready ? 'Start 60 seconds' : 'Try again · 60s';
+        document.getElementById('review-button').hidden = ready;
+      }
+      let shareGeneration = 0;
+      const shareFiles = new Map();
+      function shareBoardLayout() {
+        const puzzle=currentPuzzle(), width=els.stage.clientWidth, height=els.stage.clientHeight;
+        return {width,height,nodes:puzzle.nodes.map(node=>{
+          const el=els.stage.querySelector('[data-node="'+node.id+'"]');
+          // Layout offsets are unaffected by entrance/celebration transforms.
+          return {x:el.offsetLeft/width,y:(el.offsetTop+el.offsetHeight/2)/height,w:el.offsetWidth/width,h:el.offsetHeight/height,
+            kind:node.type==='queen'?'queen':node.type==='answer'?'answer':'clue',
+            letters:node.type==='queen'?0:clean(node.answer||node.text).length,
+            solved:state.solved[puzzle.id].has(node.id),parents:(node.parents||[]).map(id=>puzzle.nodes.findIndex(n=>n.id===id))};
+        })};
+      }
+      function renderShareResults() {
+        const summary = Object.freeze({solved: state.solved[currentPuzzle().id].size, total: answerNodes(currentPuzzle()).length, board: state.active + 1, finished: round.phase === 'won', secondsLeft: Math.ceil(round.remaining / 1000), layout: shareBoardLayout()});
+        const generation = ++shareGeneration;
+        shareFiles.clear();
+        document.getElementById('share-results').hidden = false;
+        for (const style of ['board']) {
+          const canvas = document.getElementById('share-'+style);
+          const native = document.querySelector('[data-share-native="'+style+'"]');
+          native.hidden = true;
+          drawRoyalShare(canvas, summary, style);
+          canvas.toBlob(blob => {
+            if (!blob || generation !== shareGeneration) return;
+            const file = new File([blob], 'royal-court-'+summary.board+'-'+style+'.png', {type:'image/png'});
+            shareFiles.set(style, file);
+            native.hidden = !(navigator.canShare?.({files:[file]}) && navigator.share);
+          }, 'image/png');
+        }
+      }
+      document.querySelectorAll('[data-share-download]').forEach(button => button.addEventListener('click', () => {
+        const style=button.dataset.shareDownload;
+        const canvas=document.getElementById('share-'+style);
+        canvas.toBlob(blob => {
+          if (!blob) {document.getElementById('share-feedback').textContent='The image could not be created. Please try again.';return;}
+          const url=URL.createObjectURL(blob);
+          const a=document.createElement('a');a.href=url;a.download='royal-court-'+(state.active+1)+'-'+style+'.png';a.click();
+          setTimeout(()=>URL.revokeObjectURL(url),1000);
+          document.getElementById('share-feedback').textContent='Image saved. It contains only your progress and result.';
+        },'image/png');
+      }));
+      document.querySelectorAll('[data-share-native]').forEach(button => button.addEventListener('click', async () => {
+        const file=shareFiles.get(button.dataset.shareNative);if(!file)return;
+        try {await navigator.share({files:[file],title:'Royal Court result'});}
+        catch(error) {if(error.name!=='AbortError')document.getElementById('share-feedback').textContent='Sharing is unavailable here. Use Save image instead.';}
+      }));
+      document.getElementById('start-button').addEventListener('click', startRound);
+      document.getElementById('cover-start').addEventListener('click', startRound);
+      document.getElementById('review-button').addEventListener('click', () => { round.reviewing = true; updateTimerUI(); });
+      els.hint.addEventListener('click', hint);
+      els.reset.addEventListener('click', reset);
+      els.fullscreen.addEventListener('click', toggleFullscreen);
+      els.displayOptions.forEach(button => {
+        button.addEventListener('click', () => {
+          state.display = button.dataset.displayOption;
+          render();
+        });
+      });
+      window.addEventListener('resize', scheduleWireRedraw);
+      window.addEventListener('pageshow', scheduleWireRedraw);
+      window.visualViewport?.addEventListener('resize', scheduleWireRedraw);
+      document.addEventListener('fullscreenchange', () => window.setTimeout(scheduleWireRedraw, 100));
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) { tick(); scheduleWireRedraw(); }
+      });
+      document.addEventListener('keydown', event => {
+        if (event.key.toLowerCase() === 'f' && document.activeElement?.tagName !== 'INPUT') toggleFullscreen();
+      });
+      window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', scheduleWireRedraw);
+      new ResizeObserver(scheduleWireRedraw).observe(els.stage);
+      document.fonts?.ready.then(scheduleWireRedraw);
+
+      window.render_game_to_text = renderGameToText;
+      window.advanceTime = () => scheduleWireRedraw();
+
+      createTabs();
+      render();
+    })();
+  </script>
+
+
+</body>
+</html>
