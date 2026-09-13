@@ -1,0 +1,1836 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#FFFEFA">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%23543676'/%3E%3Cpath d='M8 12l8-5 8 5-3 9H11z' fill='%23F6D772'/%3E%3C/svg%3E">
+  <title>Tell the Queen · STST Puzzle (redesign)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* STST palette */
+      --bg: #FFFEFA;
+      --floor: #FBF6EA;
+      --card: #FFFFFF;
+      --ink: #3C519C;
+      --ink-deep: #28376A;
+      --muted: #7588B8;
+      --faint: #A5B4D4;
+      --line: #E2E8F5;
+      --chip: #EEF3FF;
+      --bubble: #DFE8FF;
+      --bubble-border: #BAC9FF;
+      --answer-border: #CAD7FB;
+      --locked: #F4F6FB;
+      --locked-border: #E1E6F2;
+      --teal: #29C5B2;
+      --teal-dark: #127266;
+      --teal-bg: #E2FFF8;
+      --teal-shadow: #1FA493;
+      --wire: #9488F2;
+      --wire-faint: #D8E2F8;
+      /* Court accents */
+      --gold: #F6D772;
+      --gold-deep: #E5A818;
+      --gold-dark: #A5780A;
+      --cream: #FFF8E1;
+      --purple: #543676;
+      --purple-deep: #3A2454;
+      --purple-lit: #6B4693;
+      --urgent: #E05263;
+      --urgent-bg: #FFE8EC;
+      --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      --font-display: 'Baloo 2', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    [hidden] { display: none !important; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100%;
+      font-family: var(--font-ui);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Desk backdrop (desktop review only) */
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 16px;
+      background: #EDF0F6 radial-gradient(circle at 50% 10%, #F8F9FD 0%, #E4E9F2 100%);
+    }
+
+    button { font-family: inherit; }
+    :focus-visible { outline: 3px solid rgba(60, 81, 156, 0.45); outline-offset: 2px; }
+
+    .device-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 416px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .phone-frame {
+      position: relative;
+      width: 100%;
+      height: 880px;
+      max-height: calc(100vh - 36px);
+      background: var(--bg);
+      border-radius: 48px;
+      border: 11px solid #1E2229;
+      box-shadow:
+        0 28px 75px -12px rgba(28, 38, 70, 0.28),
+        0 8px 24px rgba(0, 0, 0, 0.08),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .phone-status-bar {
+      flex: 0 0 44px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg);
+      user-select: none;
+    }
+    .status-time { font-size: 14px; font-weight: 700; color: #17191E; }
+    .dynamic-island { width: 104px; height: 27px; background: #000; border-radius: 999px; margin-left: 6px; }
+    .status-icons { display: flex; align-items: center; gap: 6px; color: #17191E; }
+
+    .phone-home-indicator {
+      flex: 0 0 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--floor);
+      user-select: none;
+    }
+    .home-bar { width: 130px; height: 4px; background: #BAC4D8; border-radius: 999px; }
+
+    /* Scrollable app screen */
+    .phone-screen {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background: var(--bg);
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: #DCE5F8 transparent;
+    }
+    .phone-screen::-webkit-scrollbar { width: 5px; }
+    .phone-screen::-webkit-scrollbar-thumb { background-color: #DCE5F8; border-radius: 999px; }
+
+    /* Header: back · wordmark · reset */
+    .app-header {
+      flex: 0 0 52px;
+      padding: 0 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg);
+    }
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      border: none;
+      background: transparent;
+      color: var(--ink);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      padding: 0;
+      transition: background 120ms ease, transform 120ms ease;
+    }
+    .icon-btn:hover { background: var(--chip); }
+    .icon-btn:active { transform: scale(0.94); }
+    .wordmark {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+      line-height: 1;
+    }
+    .wordmark svg { width: 22px; height: 22px; display: block; }
+
+    /* Board picker: seven numbered tokens */
+    .board-picker {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      padding: 2px 12px 0;
+    }
+    .board-token {
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      border: 1.5px solid var(--bubble-border);
+      background: #FFFFFF;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 800;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      padding: 0;
+      transition: transform 140ms ease, background 140ms ease, box-shadow 140ms ease;
+    }
+    .board-token:hover { transform: translateY(-1px); background: var(--chip); }
+    .board-token[aria-selected="true"] {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: #FFFFFF;
+      box-shadow: 0 2px 0 var(--ink-deep);
+    }
+    .board-token.is-solved {
+      background: var(--teal-bg);
+      border-color: var(--teal);
+      color: var(--teal-dark);
+    }
+    .board-token.is-solved[aria-selected="true"] {
+      background: var(--teal);
+      border-color: var(--teal);
+      color: #FFFFFF;
+      box-shadow: 0 2px 0 var(--teal-shadow);
+    }
+
+    /* Board title + herald line */
+    .game-main {
+      flex: 1 0 auto;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .board-meta {
+      text-align: center;
+      padding: 8px 16px 0;
+    }
+    .board-title {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 23px;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+    .herald {
+      margin: 3px auto 0;
+      min-height: 37px;
+      max-width: 330px;
+      font-size: 13px;
+      line-height: 1.4;
+      font-weight: 500;
+      color: var(--muted);
+    }
+    .herald.success { color: var(--teal-dark); font-weight: 700; }
+    .herald.warn { color: var(--urgent); font-weight: 600; }
+
+    /* HUD: timer · laugh meter · hint */
+    .hud {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 12px 10px;
+    }
+    .timer-chip {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 38px;
+      min-width: 86px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: #FFFFFF;
+      border: 1.5px solid var(--line);
+      color: var(--ink);
+      font-size: 15px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      transition: background 200ms ease, color 200ms ease, border-color 200ms ease;
+    }
+    .timer-chip.penalty-flash {
+      background: var(--urgent-bg);
+      border-color: #F5B7C0;
+      color: var(--urgent);
+      animation: penalty-flash 450ms ease both;
+    }
+    @keyframes penalty-flash {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.07); }
+    }
+    .penalty-toast {
+      position: absolute;
+      top: 50%;
+      left: calc(100% + 6px);
+      transform: translateY(-50%);
+      font-size: 11px;
+      font-weight: 800;
+      color: #FFFFFF;
+      background: var(--urgent);
+      padding: 2px 7px;
+      border-radius: 999px;
+      pointer-events: none;
+      z-index: 10;
+      animation: penalty-fly 1100ms ease-out forwards;
+    }
+    @keyframes penalty-fly {
+      0% { opacity: 0; transform: translate(-6px, -50%) scale(0.8); }
+      20% { opacity: 1; transform: translate(0, -50%) scale(1); }
+      75% { opacity: 1; transform: translate(0, calc(-50% - 10px)) scale(1); }
+      100% { opacity: 0; transform: translate(0, calc(-50% - 22px)) scale(0.8); }
+    }
+
+    .laugh-meter {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .laugh-pip {
+      width: 24px;
+      height: 24px;
+      color: #D5DCEC;
+      transition: color 300ms ease, transform 300ms cubic-bezier(.2,.9,.2,1);
+    }
+    .laugh-pip svg { display: block; width: 100%; height: 100%; }
+    .laugh-pip.lit {
+      color: var(--gold-deep);
+      transform: translateY(-2px) scale(1.12);
+      filter: drop-shadow(0 2px 2px rgba(165, 120, 10, 0.25));
+    }
+
+    .hint-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      height: 38px;
+      padding: 0 7px 0 13px;
+      border-radius: 999px;
+      border: 1.5px solid var(--bubble-border);
+      background: #FFFFFF;
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      transition: background 120ms ease, transform 120ms ease;
+    }
+    .hint-btn:hover:not(:disabled) { background: var(--chip); transform: translateY(-1px); }
+    .hint-btn:active:not(:disabled) { transform: translateY(1px); }
+    .hint-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .hint-btn .penalty {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--urgent);
+      background: var(--urgent-bg);
+      padding: 3px 7px;
+      border-radius: 999px;
+    }
+
+    /* Win panel replaces HUD + herald once the Queen laughs */
+    .win-panel {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 6px 12px 10px;
+      padding: 10px 10px 10px 14px;
+      border-radius: 20px;
+      background: var(--teal-bg);
+      border: 1.5px solid var(--teal);
+      animation: panel-in 380ms cubic-bezier(.2,.9,.2,1) both;
+    }
+    @keyframes panel-in {
+      0% { opacity: 0; transform: translateY(6px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .win-copy { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+    .win-copy strong {
+      font-family: var(--font-display);
+      font-size: 18px;
+      line-height: 1.05;
+      color: var(--teal-dark);
+    }
+    .win-copy span {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--teal-dark);
+      opacity: 0.85;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .win-actions { display: flex; gap: 6px; flex: 0 0 auto; }
+
+    /* Buttons */
+    .app-button {
+      min-height: 42px;
+      padding: 0 20px;
+      border-radius: 999px;
+      font-family: var(--font-ui);
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: none;
+      transition: transform 120ms ease, background 120ms ease, box-shadow 120ms ease;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .app-button.primary {
+      background: var(--ink);
+      color: #FFFFFF;
+      box-shadow: 0 4px 0 var(--ink-deep);
+    }
+    .app-button.primary:hover:not(:disabled) { background: #475EA8; transform: translateY(-1px); }
+    .app-button.primary:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink-deep); }
+    .app-button.secondary {
+      background: #FFFFFF;
+      color: var(--ink);
+      border: 1.5px solid var(--bubble-border);
+    }
+    .app-button.secondary:hover:not(:disabled) { background: var(--chip); }
+    .app-button.small { min-height: 36px; padding: 0 14px; font-size: 13px; }
+    .app-button:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none !important; transform: none !important; }
+
+    /* Stage: full-bleed court */
+    .stage {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 500px;
+      background: linear-gradient(180deg, var(--bg) 0%, var(--floor) 100%);
+      overflow: hidden;
+      isolation: isolate;
+      touch-action: manipulation;
+    }
+
+    /* The royal box: a scalloped purple valance the Queen presides from */
+    .dais {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 14%;
+      z-index: 0;
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 14px, rgba(0,0,0,0) 14px 34px),
+        linear-gradient(180deg, var(--purple-lit) 0%, var(--purple) 70%);
+      transition: background 500ms ease;
+    }
+    .dais::before,
+    .dais::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 100%;
+      height: 14px;
+      background-size: 26px 14px;
+      background-repeat: repeat-x;
+      pointer-events: none;
+    }
+    .dais::before {
+      background-image: radial-gradient(circle at 13px 0, var(--gold) 0 12.5px, transparent 13.2px);
+      transform: translateY(2.5px);
+    }
+    .dais::after {
+      background-image: radial-gradient(circle at 13px 0, var(--purple) 0 12.5px, transparent 13.2px);
+    }
+    .stage.is-won .dais {
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0 14px, rgba(0,0,0,0) 14px 34px),
+        linear-gradient(180deg, #7A50A8 0%, var(--purple-lit) 70%);
+    }
+
+    .wire-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* Nodes */
+    .node {
+      position: absolute;
+      left: calc(var(--x) * 1%);
+      top: calc(var(--y) * 1%);
+      transform: translate(-50%, -50%);
+      z-index: 5;
+      user-select: none;
+      transition: transform 160ms cubic-bezier(.2,.8,.2,1), box-shadow 160ms ease, border-color 160ms ease, background 160ms ease;
+    }
+
+    /* App-shaped speech bubbles: an SVG surface (rounded body + curved tail, white halo)
+       behind every node, ported from the STST app's unified bubble geometry. */
+    .bubble-surface {
+      position: absolute;
+      left: 0;
+      top: 0;
+      overflow: visible;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .clue-word, .cells, .said, .queen-line { position: relative; z-index: 1; }
+
+    /* Clue bubbles (advisors speaking) */
+    .node.clue, .node.given {
+      min-width: 84px;
+      max-width: 126px;
+      min-height: 44px;
+      padding: 10px 17px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .clue-word {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #2F4AA1;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      line-height: 1.15;
+      white-space: nowrap;
+    }
+
+    /* Answer bubbles: the player speaking */
+    .node.answer {
+      min-width: 126px;
+      min-height: 56px;
+      padding: 9px 17px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+    .node.answer:focus-within {
+      transform: translate(-50%, -50%) scale(1.04);
+    }
+    .node.answer:focus-within .bubble-surface {
+      filter: drop-shadow(0 0 5px rgba(47, 74, 161, 0.38));
+    }
+    .node.answer.solved {
+      cursor: default;
+      animation: solved-pop 420ms cubic-bezier(.2,.9,.2,1) both;
+    }
+    .node.answer.locked {
+      opacity: 0.72;
+      cursor: not-allowed;
+    }
+    .node.answer.wrong {
+      animation: shake 280ms ease both;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translate(-50%, -50%); }
+      20% { transform: translate(calc(-50% - 6px), -50%); }
+      40% { transform: translate(calc(-50% + 6px), -50%); }
+      60% { transform: translate(calc(-50% - 4px), -50%); }
+      80% { transform: translate(calc(-50% + 4px), -50%); }
+    }
+    @keyframes solved-pop {
+      0% { transform: translate(-50%, -50%) scale(0.9); }
+      50% { transform: translate(-50%, -50%) scale(1.08); }
+      100% { transform: translate(-50%, -50%) scale(1); }
+    }
+
+    /* Letter cells */
+    .cells { display: flex; gap: 4px; align-items: center; justify-content: center; }
+    .cell {
+      position: relative;
+      width: 26px;
+      height: 36px;
+      border: 1.5px solid #C9D6F7;
+      border-radius: 8px;
+      background: #FFFFFF;
+      color: #2F4AA1;
+      font-size: 17px;
+      font-weight: 800;
+      display: grid;
+      place-items: center;
+      text-transform: uppercase;
+      line-height: 1;
+      transition: border-color 120ms ease, background 120ms ease;
+    }
+    .cell.active-cell { border-color: #2F4AA1; }
+    .node.answer:focus-within .cell.active-cell::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      bottom: 5px;
+      width: 12px;
+      height: 2.5px;
+      border-radius: 2px;
+      background: #2F4AA1;
+      transform: translateX(-50%);
+      animation: caret 1s steps(2, start) infinite;
+    }
+    @keyframes caret { to { opacity: 0; } }
+    .locked .cell { border-color: #D6D6D6; border-style: dashed; background: transparent; }
+
+    /* A solved answer is spoken: the app's teal win bubble, white word, no cells */
+    .said {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #FFFFFF;
+      line-height: 1;
+      padding: 8px 4px;
+      white-space: nowrap;
+    }
+
+    .node-input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 999px;
+      opacity: 0.001;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      z-index: 25;
+      pointer-events: auto;
+    }
+    .node-input:disabled { cursor: not-allowed; pointer-events: none; }
+
+    /* The player, beside every bubble they can speak (open or already said) */
+    .me-avatar {
+      position: absolute;
+      bottom: -55px;
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      background: #FFFFFF;
+      border: 2px solid #FFFFFF;
+      box-shadow: 0 0 0 1.5px #D5DEF5, 0 2px 4px rgba(60, 81, 156, 0.18);
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 3;
+    }
+    .me-avatar img { display: block; width: 100%; height: 100%; object-fit: contain; }
+    .node.avatar-left .me-avatar { left: -20px; }
+    .node.avatar-right .me-avatar { right: -20px; }
+    .node.answer.solved .me-avatar { box-shadow: 0 0 0 1.5px var(--teal), 0 2px 4px rgba(18, 114, 102, 0.2); }
+
+    /* The Queen, in her box */
+    .node.queen {
+      min-width: 132px;
+      min-height: 52px;
+      padding: 8px 20px;
+      color: var(--purple-deep);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      z-index: 12;
+    }
+    .queen-line {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 800;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .queen-character {
+      position: absolute;
+      left: -82px;
+      top: 50%;
+      transform: translateY(-40%);
+      width: 72px;
+      height: 82px;
+      filter: drop-shadow(0 3px 6px rgba(20, 10, 35, 0.4));
+      pointer-events: none;
+    }
+    .queen-character svg { display: block; width: 100%; height: 100%; }
+    .node.queen.heard .queen-line { font-size: 18px; letter-spacing: 0.02em; }
+    .node.queen.heard .queen-character { animation: queen-laugh 700ms cubic-bezier(.3,.9,.3,1.2) 2 both; }
+    @keyframes queen-laugh {
+      0%, 100% { transform: translateY(-40%) rotate(0); }
+      30% { transform: translateY(-52%) rotate(-5deg); }
+      65% { transform: translateY(-34%) rotate(4deg); }
+    }
+    /* Advisors beside their bubbles */
+    .advisor-avatar {
+      position: absolute;
+      width: 30px;
+      height: 36px;
+      filter: drop-shadow(0 2px 3px rgba(60, 81, 156, 0.15));
+      pointer-events: none;
+      z-index: 2;
+    }
+    .advisor-avatar svg { display: block; width: 100%; height: 100%; }
+    .node.avatar-left .advisor-avatar { left: -16px; bottom: -50px; }
+    .node.avatar-right .advisor-avatar { right: -16px; bottom: -50px; }
+    .node.avatar-center .advisor-avatar { left: 50%; margin-left: -15px; bottom: -50px; }
+
+    /* Pre-round cover: blurs the court, leaves the Queen visible */
+    .round-cover {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 14%;
+      bottom: 0;
+      z-index: 30;
+      background: rgba(255, 254, 250, 0.92);
+      backdrop-filter: blur(9px);
+      -webkit-backdrop-filter: blur(9px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px 24px;
+      text-align: center;
+    }
+    .round-cover strong {
+      font-family: var(--font-display);
+      font-size: 27px;
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.01em;
+      margin: 0 0 8px;
+      color: var(--ink);
+    }
+    .round-cover p {
+      max-width: 270px;
+      font-size: 14px;
+      line-height: 1.45;
+      color: var(--muted);
+      margin: 0 0 22px;
+    }
+    .cover-rules {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 22px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .cover-rules span { display: inline-flex; align-items: center; gap: 5px; }
+    .cover-rules svg { width: 15px; height: 15px; }
+
+    /* Confetti from the royal box */
+    .stage-flash {
+      position: absolute;
+      width: 9px;
+      height: 9px;
+      border-radius: 2px;
+      background: var(--gold);
+      z-index: 30;
+      pointer-events: none;
+      animation: confetti-drop 1300ms cubic-bezier(.2,.8,.2,1) forwards;
+    }
+    @keyframes confetti-drop {
+      0% { opacity: 1; transform: translate(0, 0) scale(1) rotate(0); }
+      100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.5) rotate(300deg); }
+    }
+
+    /* Share card (after the win) */
+    .share-results {
+      margin: 12px 12px 20px;
+      padding: 16px;
+      background: #FFFFFF;
+      border: 1.5px solid var(--line);
+      border-radius: 24px;
+      text-align: center;
+      box-shadow: 0 4px 16px rgba(60, 81, 156, 0.05);
+    }
+    .share-results h3 {
+      margin: 0 0 4px;
+      font-family: var(--font-display);
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+    .share-results p { margin: 0 0 14px; font-size: 13px; color: var(--muted); line-height: 1.4; }
+    .share-results canvas {
+      display: block;
+      width: 100%;
+      max-width: 290px;
+      margin: 0 auto 12px;
+      border-radius: 16px;
+      border: 1.5px solid var(--answer-border);
+    }
+    .share-actions { display: flex; gap: 8px; justify-content: center; }
+    #share-feedback { margin: 10px 0 0; min-height: 1em; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+
+    /* Real phones: no fake chrome, fill the viewport */
+    @media (max-width: 480px) {
+      body { padding: 0; background: var(--bg); justify-content: flex-start; }
+      .device-wrapper { max-width: 100%; }
+      .phone-frame {
+        height: 100svh;
+        max-height: none;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      .phone-status-bar, .phone-home-indicator { display: none; }
+      .app-header { padding-top: env(safe-area-inset-top); }
+      .stage { min-height: 480px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="device-wrapper">
+    <div class="phone-frame">
+      <div class="phone-status-bar" aria-hidden="true">
+        <span class="status-time">9:41</span>
+        <div class="dynamic-island"></div>
+        <div class="status-icons">
+          <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor">
+            <rect x="0" y="8" width="3" height="3" rx="0.5"/>
+            <rect x="4.5" y="5.5" width="3" height="5.5" rx="0.5"/>
+            <rect x="9" y="3" width="3" height="8" rx="0.5"/>
+            <rect x="13.5" y="0.5" width="3" height="10.5" rx="0.5"/>
+          </svg>
+          <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor">
+            <path d="M7.5 2.5C5 2.5 2.7 3.5 1 5.1L0 4C2 2 4.6 0.8 7.5 0.8s5.5 1.2 7.5 3.2l-1 1.1c-1.7-1.6-4-2.6-6.5-2.6zm0 3.5c-1.7 0-3.2.7-4.4 1.8L2.1 6.8C3.5 5.4 5.4 4.5 7.5 4.5s4 0.9 5.4 2.3l-1 1c-1.2-1.1-2.7-1.8-4.4-1.8zm0 3.5c-.8 0-1.5.3-2.1.9L7.5 12.5l2.1-2.1c-.6-.6-1.3-.9-2.1-.9z"/>
+          </svg>
+          <svg width="22" height="11" viewBox="0 0 22 11" fill="none" stroke="currentColor">
+            <rect x="0.5" y="0.5" width="18" height="10" rx="3" stroke-width="1.2"/>
+            <rect x="2.5" y="2.5" width="12" height="6" rx="1.5" fill="currentColor" stroke="none"/>
+            <path d="M20.5 3.5v4" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="phone-screen" id="phone-screen">
+        <header class="app-header">
+          <button class="icon-btn" id="header-back" type="button" aria-label="Previous board">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <div class="wordmark">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18h18l1.2-9.5-4.7 3.4L12 4l-5.5 7.9L1.8 8.5Z" fill="#F6D772" stroke="#A5780A" stroke-width="1.6" stroke-linejoin="round"/><path d="M4 20.5h16" stroke="#A5780A" stroke-width="2" stroke-linecap="round"/></svg>
+            <span>Tell the Queen</span>
+          </div>
+          <button class="icon-btn" id="reset-button" type="button" aria-label="Reset this board">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+          </button>
+        </header>
+
+        <nav class="board-picker" id="board-picker" role="tablist" aria-label="Choose a board"></nav>
+
+        <main class="game-main">
+          <div class="board-meta">
+            <h2 class="board-title" id="puzzle-title">The royal alibi</h2>
+            <p class="herald" id="herald" role="status" aria-live="polite">Connect the clues up the court and make the Queen laugh.</p>
+          </div>
+
+          <div class="hud" id="hud">
+            <div class="timer-chip" id="timer-chip">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <strong id="timer" role="timer" aria-label="0 seconds elapsed">0:00</strong>
+            </div>
+            <div class="laugh-meter" id="laugh-meter" role="img" aria-label="0 of 3 laughs"></div>
+            <button class="hint-btn" id="hint-button" type="button" aria-label="Use a hint, adds 10 seconds">
+              <span>Hint · <span id="hint-count">3</span></span>
+              <span class="penalty">+10s</span>
+            </button>
+          </div>
+
+          <div class="win-panel" id="win-panel" hidden>
+            <div class="win-copy">
+              <strong>The Queen laughs!</strong>
+              <span id="win-stats">Solved in 0:00</span>
+            </div>
+            <div class="win-actions">
+              <button class="app-button secondary small" id="win-share" type="button">Share</button>
+              <button class="app-button primary small" id="win-next" type="button">Next board</button>
+            </div>
+          </div>
+
+          <div class="stage" id="stage" role="tabpanel" aria-labelledby="puzzle-title">
+            <div class="dais" aria-hidden="true"></div>
+            <canvas class="wire-canvas" id="wire-canvas" aria-hidden="true"></canvas>
+
+            <div class="round-cover" id="round-cover">
+              <strong id="cover-title">Make the Queen laugh</strong>
+              <p id="cover-copy">Each bubble joins the two clues beneath it. Say the right word and it rises toward the throne.</p>
+              <div class="cover-rules" aria-hidden="true">
+                <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Timed</span>
+                <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3Z"/></svg>3 hints, +10s each</span>
+              </div>
+              <button class="app-button primary" id="cover-start" type="button">Start puzzle</button>
+            </div>
+          </div>
+
+          <section class="share-results" id="share-results" aria-labelledby="share-title" hidden>
+            <h3 id="share-title">Share your board</h3>
+            <p>A spoiler-free picture of your run.</p>
+            <canvas id="share-board"></canvas>
+            <div class="share-actions">
+              <button type="button" class="app-button primary" data-share-download="board">Save image</button>
+              <button type="button" class="app-button secondary" data-share-native="board" hidden>Share</button>
+            </div>
+            <p id="share-feedback" role="status"></p>
+          </section>
+        </main>
+      </div>
+
+      <div class="phone-home-indicator" aria-hidden="true">
+        <div class="home-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Share image renderer -->
+  <script id="share-image-renderer">
+    function drawRoyalShare(canvas, summary) {
+      const { solved, total, board, finished, elapsedSecs, hintsUsed, layout } = summary;
+      canvas.width = 1080;
+      canvas.height = 1350;
+      const c = canvas.getContext('2d');
+
+      const bg = '#FFFEFA';
+      const ink = '#3C519C';
+      const muted = '#7588B8';
+      const clueBg = '#DFE8FF';
+      const clueBorder = '#BAC9FF';
+      const teal = '#29C5B2';
+      const tealBg = '#E2FFF8';
+      const grayUnsolved = '#F4F6FB';
+      const purple = '#543676';
+      const gold = '#F6D772';
+
+      c.fillStyle = bg;
+      c.fillRect(0, 0, 1080, 1350);
+
+      const text = (t, x, y, size = 32, color = ink, weight = 700, family = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif') => {
+        c.fillStyle = color;
+        c.font = weight + ' ' + size + 'px ' + family;
+        c.textAlign = 'center';
+        c.textBaseline = 'middle';
+        c.fillText(t, x, y);
+      };
+      const display = '"Baloo 2", Inter, -apple-system, sans-serif';
+
+      const rounded = (x, y, w, h, r, fill, stroke = null, line = 2) => {
+        c.beginPath();
+        c.roundRect(x, y, w, h, r);
+        c.fillStyle = fill;
+        c.fill();
+        if (stroke) { c.strokeStyle = stroke; c.lineWidth = line; c.stroke(); }
+      };
+
+      // Royal box header with scalloped gold rim
+      c.fillStyle = purple;
+      c.fillRect(0, 0, 1080, 190);
+      for (let x = 0; x < 1080; x += 54) {
+        c.beginPath(); c.arc(x + 27, 190, 27, 0, Math.PI); c.fillStyle = gold; c.fill();
+        c.beginPath(); c.arc(x + 27, 186, 27, 0, Math.PI); c.fillStyle = purple; c.fill();
+      }
+      text('♛', 540, 62, 46, gold, 400, 'Georgia, serif');
+      text('Tell the Queen', 540, 118, 52, '#FFFFFF', 800, display);
+      text('BOARD ' + board + ' OF 7  ·  STST PUZZLE', 540, 160, 20, gold, 700);
+
+      // Board card
+      rounded(40, 250, 1000, 860, 36, '#FFFFFF', '#E2E8F5', 3);
+
+      const scale = Math.min(920 / layout.width, 800 / layout.height);
+      const ox = (1080 - layout.width * scale) / 2;
+      const oy = 260 + (840 - layout.height * scale) / 2;
+      const nodes = layout.nodes.map(n => ({
+        ...n,
+        x: ox + n.x * layout.width * scale,
+        y: oy + n.y * layout.height * scale,
+        w: n.w * layout.width * scale,
+        h: n.h * layout.height * scale
+      }));
+
+      nodes.forEach(child => child.parents.forEach(index => {
+        const parent = nodes[index];
+        const down = child.y >= parent.y;
+        const sy = parent.y + (down ? parent.h / 2 : -parent.h / 2);
+        const ey = child.y + (down ? -child.h / 2 : child.h / 2);
+        const cy = sy + Math.sign(ey - sy || 1) * Math.max(20 * scale, Math.abs(ey - sy) * .55);
+        const lit = parent.solved || parent.kind === 'clue';
+        c.beginPath();
+        c.moveTo(parent.x, sy);
+        c.bezierCurveTo(parent.x, cy, child.x, cy, child.x, ey);
+        c.strokeStyle = child.kind === 'queen' ? (lit ? '#E5A818' : '#D8E2F8') : (lit ? '#9488F2' : '#D8E2F8');
+        c.lineWidth = lit ? 4 : 3;
+        c.setLineDash(child.kind === 'queen' ? [] : [6, 8]);
+        c.stroke();
+      }));
+      c.setLineDash([]);
+
+      nodes.forEach(n => {
+        if (n.kind === 'queen') {
+          rounded(n.x - 70, n.y - 40, 140, 80, 40, finished ? gold : '#FFF8E1', finished ? '#FFFFFF' : gold, 4);
+          text('♛', n.x, n.y - 2, 44, finished ? '#3A2454' : '#A5780A', 400, 'Georgia, serif');
+          return;
+        }
+        const isClue = n.kind === 'clue';
+        const color = isClue ? clueBg : n.solved ? tealBg : grayUnsolved;
+        const outline = isClue ? clueBorder : n.solved ? teal : '#CAD7FB';
+        const x = n.x - n.w / 2;
+        const y = n.y - n.h / 2;
+        const r = Math.min(30, n.h * 0.5);
+        rounded(x, y, n.w, n.h, r, color, outline, 3);
+
+        const count = n.letters;
+        const gap = Math.min(5, n.w * 0.024);
+        const boxW = Math.min(28, (n.w - 24 - gap * (count - 1)) / count);
+        const boxH = Math.min(36, boxW * 1.55);
+        const left = n.x - (count * boxW + (count - 1) * gap) / 2;
+        for (let i = 0; i < count; i++) {
+          rounded(left + i * (boxW + gap), n.y - boxH / 2, boxW, boxH, Math.min(6, boxW * 0.25), n.solved ? teal : '#FFFFFF', outline, 1.8);
+        }
+      });
+
+      const mins = Math.floor(elapsedSecs / 60);
+      const secs = elapsedSecs % 60;
+      const timeStr = mins + ':' + String(secs).padStart(2, '0');
+
+      text(solved + ' / ' + total + ' laughs', 540, 1160, 40, ink, 800, display);
+      text(
+        finished ? 'The Queen laughed in ' + timeStr + (hintsUsed ? ' · ' + hintsUsed + ' hint' + (hintsUsed > 1 ? 's' : '') : '') : 'Still amusing her…',
+        540, 1215, 32, finished ? '#127266' : muted, 800
+      );
+
+      const legend = [['Clues', clueBorder], ['Solved', teal], ['Unsolved', '#CAD7FB']];
+      legend.forEach(([label, color], i) => {
+        const lx = 300 + i * 240;
+        rounded(lx - 75, 1276, 22, 22, 6, color);
+        text(label, lx + 10, 1287, 22, muted, 600);
+      });
+
+      canvas.setAttribute('role', 'img');
+      canvas.setAttribute('aria-label', 'Tell the Queen board ' + board + ': ' + solved + ' of ' + total + ' solved');
+    }
+  </script>
+
+  <!-- Game logic -->
+  <script>
+    (() => {
+      const puzzles = [
+        {
+          id: 'court_rising',
+          kind: 'Royal court',
+          tab: 'The royal alibi',
+          title: "The royal alibi",
+          description: "Start at the bottom. Follow the silly connections and make the Queen laugh.",
+          nodes: [
+            { id: 'queen', type: 'queen', parents: ['a3'], x: 50, y: 7 },
+            { id: 'a3', type: 'answer', answer: "EXCUSE", parents: ['a2', 'c4'], x: 50, y: 25, hint: "“The dog ate my homework” is this classic attempt to get out of trouble.", joke: "The royal dog denies eating the homework." },
+            { id: 'c4', type: 'clue', text: 'HOMEWORK', x: 22, y: 44 },
+            { id: 'a2', type: 'answer', answer: "DOG", parents: ['a1', 'c3'], x: 74, y: 44, hint: "The four-legged suspect who gets blamed for every mysterious smell.", joke: "The only suspect who cannot defend himself." },
+            { id: 'a1', type: 'answer', answer: "FART", parents: ['c1', 'c2'], x: 34, y: 64, hint: "What beans can persuade your bottom to do.", joke: "The royal trumpeter has competition." },
+            { id: 'c3', type: 'clue', text: 'BLAME', x: 82, y: 64 },
+            { id: 'c1', type: 'clue', text: 'BEANS', x: 22, y: 84 },
+            { id: 'c2', type: 'clue', text: 'BUTT', x: 74, y: 84 }
+          ]
+        },
+        {
+          id: 'court_wings',
+          kind: 'Royal court',
+          tab: 'A formal bath',
+          title: "A very formal bath",
+          description: "Solve both sides, then combine them. Her Majesty could use a laugh.",
+          nodes: [
+            { id: 'queen', type: 'queen', parents: ['a3'], x: 50, y: 6 },
+            { id: 'a3', type: 'answer', answer: "SOAKED", parents: ['a1', 'a2'], x: 50, y: 24, hint: "How your fancy evening wear ends up if you wear it under running water.", joke: "The invitation said black tie, not bath time." },
+            { id: 'a1', type: 'answer', answer: "SHOWER", parents: ['c1', 'c2'], x: 28, y: 48, hint: "A place to get clean and perform a completely unrequested solo.", joke: "A concert with no audience. Ideally." },
+            { id: 'a2', type: 'answer', answer: "TUXEDO", parents: ['c3', 'c4'], x: 72, y: 48, hint: "Formal evening wear that a penguin seems to have on already.", joke: "The penguin was already dressed." },
+            { id: 'c1', type: 'clue', text: 'SOAP', x: 16, y: 72 },
+            { id: 'c2', type: 'clue', text: 'SINGING', x: 38, y: 88 },
+            { id: 'c3', type: 'clue', text: 'PENGUIN', x: 62, y: 88 },
+            { id: 'c4', type: 'clue', text: 'GALA', x: 84, y: 72 }
+          ]
+        },
+        {
+          id: 'court_round',
+          kind: 'Royal court',
+          tab: 'Noisy court',
+          title: "The court gets noisy",
+          description: "Find the funny link on each side, then bring the punchline to the Queen.",
+          nodes: [
+            { id: 'queen', type: 'queen', parents: ['a3'], x: 50, y: 6 },
+            { id: 'a3', type: 'answer', answer: "ZOO", parents: ['a1', 'a2'], x: 50, y: 23, hint: "A three-letter place where the neighbors make animal noises like these.", joke: "Her Majesty’s court is officially a zoo." },
+            { id: 'a1', type: 'answer', answer: "SNORT", parents: ['c1', 'c2'], x: 32, y: 48, hint: "A pig does this. So do people who laugh through their noses.", joke: "Very dignified. Almost porcine." },
+            { id: 'a2', type: 'answer', answer: "QUACK", parents: ['c3', 'c4'], x: 68, y: 48, hint: "A duck says it. A terrible doctor gets called one.", joke: "Medical school was on a pond." },
+            { id: 'c1', type: 'clue', text: 'PIG', x: 16, y: 70 },
+            { id: 'c2', type: 'clue', text: 'LAUGH', x: 32, y: 88 },
+            { id: 'c3', type: 'clue', text: 'DUCK', x: 84, y: 70 },
+            { id: 'c4', type: 'clue', text: 'DOCTOR', x: 68, y: 88 }
+          ]
+        },
+        {
+          id: 'court_knight',
+          kind: 'Royal court',
+          tab: 'Brave knight',
+          title: "The cowardly hero",
+          description: "Help the royal champion prepare for battle... or execute a strategic retreat.",
+          nodes: [
+            { id: 'queen', type: 'queen', parents: ['a3'], x: 50, y: 6 },
+            { id: 'a3', type: 'answer', answer: "PANIC", parents: ['a1', 'a2'], x: 50, y: 24, hint: "What you are definitely doing if you scream and run simultaneously.", joke: "The royal guard’s signature battle maneuver: full panic." },
+            { id: 'a1', type: 'answer', answer: "SCREAM", parents: ['c1', 'c2'], x: 28, y: 48, hint: "A spooky ghost makes you do it, and a baby does it at 3 AM.", joke: "Vocal warmups for the royal championship." },
+            { id: 'a2', type: 'answer', answer: "RUN", parents: ['c3', 'c4'], x: 72, y: 48, hint: "What a startled bunny does, and the only thing you do on a treadmill.", joke: "A tactical retrograde advance on foot." },
+            { id: 'c1', type: 'clue', text: 'GHOST', x: 16, y: 72 },
+            { id: 'c2', type: 'clue', text: 'BABY', x: 38, y: 88 },
+            { id: 'c3', type: 'clue', text: 'RABBIT', x: 62, y: 88 },
+            { id: 'c4', type: 'clue', text: 'TREADMILL', x: 84, y: 72 }
+          ]
+        },
+        {
+          id: 'court_snooze',
+          kind: 'Royal court',
+          tab: 'Morning court',
+          title: "The alarm clock incident",
+          description: "Trace the morning catastrophe that ends with Her Majesty’s royal judgment.",
+          nodes: [
+            { id: 'queen', type: 'queen', parents: ['a3'], x: 50, y: 7 },
+            { id: 'a3', type: 'answer', answer: "FIRED", parents: ['a2', 'c4'], x: 50, y: 25, hint: "What happens when you arrive three hours late to report to the boss.", joke: "Her Majesty officially declares you unemployed." },
+            { id: 'c4', type: 'clue', text: 'BOSS', x: 22, y: 44 },
+            { id: 'a2', type: 'answer', answer: "LATE", parents: ['a1', 'c3'], x: 74, y: 44, hint: "What hitting snooze repeatedly guarantees you will be.", joke: "Punctuality is merely a polite suggestion." },
+            { id: 'a1', type: 'answer', answer: "SNOOZE", parents: ['c1', 'c2'], x: 34, y: 64, hint: "The tempting button you hit when the alarm interrupts your pillow.", joke: "Nine minutes of glorious, defiant rebellion." },
+            { id: 'c3', type: 'clue', text: 'CLOCK', x: 82, y: 64 },
+            { id: 'c1', type: 'clue', text: 'ALARM', x: 22, y: 84 },
+            { id: 'c2', type: 'clue', text: 'PILLOW', x: 74, y: 84 }
+          ]
+        },
+        {
+          id: 'court_snack',
+          kind: 'Royal court',
+          tab: 'Midnight raid',
+          title: "The crumb detective",
+          description: "Someone raided the royal pantry at 1 AM. Trace the culinary crime.",
+          nodes: [
+            { id: 'queen', type: 'queen', parents: ['a3'], x: 50, y: 6 },
+            { id: 'a3', type: 'answer', answer: "CAUGHT", parents: ['a1', 'a2'], x: 50, y: 24, hint: "What you are when the kitchen light flips on and your mouth is full.", joke: "Busted in your royal slippers by Her Majesty herself." },
+            { id: 'a1', type: 'answer', answer: "SNACK", parents: ['c1', 'c2'], x: 28, y: 48, hint: "A stealthy bite to eat in the glow of the refrigerator.", joke: "A top-secret covert raid on the pantry." },
+            { id: 'a2', type: 'answer', answer: "CRUMB", parents: ['c3', 'c4'], x: 72, y: 48, hint: "The tiny crunchy evidence scattered on your shirt and pillow.", joke: "Forensic evidence of delicious crimes." },
+            { id: 'c1', type: 'clue', text: 'MIDNIGHT', x: 16, y: 72 },
+            { id: 'c2', type: 'clue', text: 'FRIDGE', x: 38, y: 88 },
+            { id: 'c3', type: 'clue', text: 'COOKIE', x: 62, y: 88 },
+            { id: 'c4', type: 'clue', text: 'JAR', x: 84, y: 72 }
+          ]
+        },
+        {
+          id: 'court_choir',
+          kind: 'Royal court',
+          tab: 'Castle choir',
+          title: "The royal racket",
+          description: "Listen to the awful sounds echoing through the grand corridors.",
+          nodes: [
+            { id: 'queen', type: 'queen', parents: ['a3'], x: 50, y: 6 },
+            { id: 'a3', type: 'answer', answer: "NOISE", parents: ['a1', 'a2'], x: 50, y: 23, hint: "What honking and ringing make when combined all morning.", joke: "The royal orchestra has been dismissed indefinitely." },
+            { id: 'a1', type: 'answer', answer: "HONK", parents: ['c1', 'c2'], x: 32, y: 48, hint: "A donkey bray sounds like this, and you press the steering wheel to do it.", joke: "Very musical. Like a traffic jam in a barn." },
+            { id: 'a2', type: 'answer', answer: "RING", parents: ['c3', 'c4'], x: 68, y: 48, hint: "A church bell does it, and an old-fashioned telephone does too.", joke: "Incoming royal call on line one." },
+            { id: 'c1', type: 'clue', text: 'DONKEY', x: 16, y: 70 },
+            { id: 'c2', type: 'clue', text: 'CAR', x: 32, y: 88 },
+            { id: 'c3', type: 'clue', text: 'BELL', x: 84, y: 70 },
+            { id: 'c4', type: 'clue', text: 'TELEPHONE', x: 68, y: 88 }
+          ]
+        }
+      ];
+
+      const QUEEN_Y = 7.4; // the Queen sits inside the royal box (dais is the top 14% of the stage)
+      const TOTAL_HINTS = 3;
+
+      const round = {
+        phase: 'ready', // 'ready' | 'running' | 'won'
+        startTime: 0,
+        elapsedMs: 0,
+        penaltyMs: 0,
+        hintsLeft: TOTAL_HINTS,
+        interval: null
+      };
+
+      const READY_MESSAGE = 'Connect the clues up the court and make the Queen laugh.';
+      const state = {
+        active: 0,
+        solved: Object.fromEntries(puzzles.map(p => [p.id, new Set()])),
+        values: Object.fromEntries(puzzles.map(p => [p.id, {}])),
+        message: READY_MESSAGE,
+        tone: ''
+      };
+
+      const els = {
+        picker: document.getElementById('board-picker'),
+        title: document.getElementById('puzzle-title'),
+        herald: document.getElementById('herald'),
+        hud: document.getElementById('hud'),
+        laughMeter: document.getElementById('laugh-meter'),
+        stage: document.getElementById('stage'),
+        canvas: document.getElementById('wire-canvas'),
+        hint: document.getElementById('hint-button'),
+        hintCount: document.getElementById('hint-count'),
+        reset: document.getElementById('reset-button'),
+        timer: document.getElementById('timer'),
+        timerChip: document.getElementById('timer-chip'),
+        cover: document.getElementById('round-cover'),
+        coverStart: document.getElementById('cover-start'),
+        winPanel: document.getElementById('win-panel'),
+        winStats: document.getElementById('win-stats'),
+        winNext: document.getElementById('win-next'),
+        winShare: document.getElementById('win-share'),
+        headerBack: document.getElementById('header-back'),
+        share: document.getElementById('share-results'),
+        shareFeedback: document.getElementById('share-feedback')
+      };
+
+      const avatarColors = ['#F38D7F', '#7797AF', '#7EAE91', '#C778A7', '#6A97D7', '#E2A86D'];
+      const avatarHair = ['#543224', '#2C3A4E', '#3D2845', '#1F3F34', '#5A2A38', '#42281D'];
+      const avatarSkin = ['#FAD4C0', '#ECC0A0', '#E5B287', '#D19A70', '#F7DDC7', '#BD835A'];
+
+      function advisorAvatar(index) {
+        const bg = avatarColors[index % avatarColors.length];
+        const hair = avatarHair[index % avatarHair.length];
+        const skin = avatarSkin[index % avatarSkin.length];
+        return `
+          <span class="advisor-avatar" aria-hidden="true">
+            <svg viewBox="0 0 40 46">
+              <circle cx="20" cy="18" r="16" fill="${bg}" stroke="#3C519C" stroke-width="1.8"/>
+              <path d="M4 44c1-10 8-15 16-15s15 5 16 15Z" fill="#3C519C"/>
+              <path d="M12 14c0-7 3-11 8-11s8 4 8 11v4c-2 2-4 3-8 3s-6-1-8-3Z" fill="${hair}"/>
+              <circle cx="20" cy="20" r="9.5" fill="${skin}" stroke="#3C519C" stroke-width="1.2"/>
+              <circle cx="17" cy="20" r="1.3" fill="#3C519C"/>
+              <circle cx="23" cy="20" r="1.3" fill="#3C519C"/>
+              <path d="M18 24c1 1.2 3 1.2 4 0" fill="none" stroke="#3C519C" stroke-width="1.2" stroke-linecap="round"/>
+            </svg>
+          </span>
+        `;
+      }
+
+      function queenMascot(heard = false) {
+        return `
+          <span class="queen-character" aria-hidden="true">
+            <svg viewBox="0 0 80 92">
+              <circle cx="40" cy="40" r="32" fill="#543676" stroke="#F6D772" stroke-width="2.5"/>
+              <path d="M9 91c2-18 14-27 31-27s29 9 31 27Z" fill="#3F2858" stroke="#231730" stroke-width="2"/>
+              <path d="M28 65 40 76 52 65l6 8-8 17H30l-8-17Z" fill="#FFF3C6" stroke="#3C519C" stroke-width="1.8" stroke-linejoin="round"/>
+              <circle cx="40" cy="43" r="20" fill="#D9A07E" stroke="#3C519C" stroke-width="1.8"/>
+              <path d="M18 24 23 7l17 13L57 7l5 17Z" fill="#F6D772" stroke="#A5780A" stroke-width="2" stroke-linejoin="round"/>
+              <circle cx="23" cy="8" r="2.5" fill="#E05263"/>
+              <circle cx="40" cy="18" r="2.5" fill="#E05263"/>
+              <circle cx="57" cy="8" r="2.5" fill="#E05263"/>
+              <circle cx="33" cy="44" r="1.8" fill="#3C519C"/>
+              <circle cx="47" cy="44" r="1.8" fill="#3C519C"/>
+              ${heard
+                ? '<path d="M31 53h18c0 10-18 10-18 0Z" fill="#6B2942" stroke="#A94F65" stroke-width="1.5"/><path d="M34 54h12v2.5H34Z" fill="#FFFFFF"/>'
+                : '<path d="M34 56c4 3 8 3 12 0" fill="none" stroke="#A94F65" stroke-width="2.2" stroke-linecap="round"/>'}
+            </svg>
+          </span>
+        `;
+      }
+
+      // The player's avatar: the STST "cat" character (src/assets/avatars/characters), 112px.
+      const ME_AVATAR_SRC = 'data:image/png;base64,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';
+      function meAvatar() {
+        return `<span class="me-avatar" aria-hidden="true"><img src="${ME_AVATAR_SRC}" alt=""></span>`;
+      }
+
+      // STST unified speech bubble geometry (stst/src/components/speech-bubble/unified-style.tsx):
+      // rounded body inset 2px with radius min(h/2, 32), the "classic" curved tail rotated 141deg
+      // and anchored ~18% along the bottom edge, all drawn twice: a white halo, then the fill.
+      const TAIL = { w: 34, h: 22, path: 'M2 12 C6 2 20 2 30 10 C22 12 14 18 4 20 Z', rotation: 141, centerX: 18.06, yFactor: 12.8, raiseY: 2 };
+      const TAIL_SCALE = 1.216 * 1.15 * 1.15;
+      const HALO_WIDTH = 3;
+
+      function bubbleGeometry(width, height, side, fontSize, ctx) {
+        const inset = 2;
+        const left = inset, top = inset;
+        const right = Math.max(width - inset, left + 1);
+        const bottom = Math.max(height - inset, top + 1);
+        const radius = Math.min((bottom - top) / 2, 32);
+        const fontScale = Math.min(1.08, Math.max(0.78, 1 + ((fontSize - 18) / 18) * 0.9));
+        const ctxScale = ctx === 'avatar-adjacent' ? 0.68 : 1;
+        const scale = TAIL_SCALE * fontScale * ctxScale;
+        const edgeAnchor = Math.min(58, Math.max(32, width * 0.181 + 4));
+        const compact = Math.min(1, Math.max(0, (18 - fontSize) / 4));
+        const anchorX = side === 'center' ? width / 2 : edgeAnchor - 3 * compact + (ctx === 'avatar-adjacent' ? -14 : 0);
+        return {
+          body: { x: left, y: top, w: right - left, h: bottom - top, r: radius },
+          tail: { scale, tx: anchorX - TAIL.centerX * scale, ty: bottom - TAIL.yFactor * scale - TAIL.raiseY }
+        };
+      }
+
+      function bubbleSurfaceMarkup(width, height, side, fill, outline, fontSize, ctx) {
+        const g = bubbleGeometry(width, height, side, fontSize, ctx);
+        const tail = (color, outlined) => `
+          <g transform="translate(${g.tail.tx.toFixed(2)} ${g.tail.ty.toFixed(2)})"><g transform="scale(${g.tail.scale.toFixed(3)})"><g transform="rotate(${TAIL.rotation} ${TAIL.w / 2} ${TAIL.h / 2})">
+            <path d="${TAIL.path}" fill="${color}" ${outlined ? `stroke="${outline}" stroke-width="${(HALO_WIDTH / g.tail.scale).toFixed(2)}" stroke-linejoin="round" stroke-linecap="round"` : ''}/>
+          </g></g></g>`;
+        const tails = (color, outlined) => {
+          if (side === 'none') return '';
+          const t = tail(color, outlined);
+          return side === 'right' ? `<g transform="translate(${width} 0) scale(-1 1)">${t}</g>` : t;
+        };
+        const body = (color, stroke) => `<rect x="${g.body.x}" y="${g.body.y}" width="${g.body.w}" height="${g.body.h}" rx="${g.body.r}" fill="${color}" ${stroke ? `stroke="${outline}" stroke-width="${HALO_WIDTH}"` : ''}/>`;
+        return body(outline, true) + tails(outline, true) + body(fill, false) + tails(fill, false);
+      }
+
+      function bubbleColors(el) {
+        const c = el.classList;
+        if (c.contains('queen')) return c.contains('heard') ? ['#F6D772', '#FFFFFF'] : ['#FFF8E1', '#F6D772'];
+        if (c.contains('clue') || c.contains('given')) return ['#E4EBFC', '#FFFFFF'];
+        if (c.contains('wrong')) return ['#FFE8EC', '#E05263'];
+        if (c.contains('solved')) return ['#29C5B2', '#FFFFFF'];
+        if (c.contains('locked')) return ['#EDEDED', '#FFFFFF'];
+        return ['#EEF3FF', '#FFFFFF'];
+      }
+
+      function paintBubble(el) {
+        const w = el.offsetWidth, h = el.offsetHeight;
+        if (!w || !h) return;
+        const [fill, outline] = bubbleColors(el);
+        const side = el.dataset.tail || 'left';
+        const ctx = el.dataset.ctx || 'standard';
+        const fontSize = Number(el.dataset.font) || 18;
+        const key = [w, h, fill, outline, side, ctx].join('|');
+        if (el.dataset.painted === key) return;
+        el.dataset.painted = key;
+        let svg = el.querySelector(':scope > .bubble-surface');
+        if (!svg) {
+          svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          svg.setAttribute('class', 'bubble-surface');
+          svg.setAttribute('aria-hidden', 'true');
+          el.prepend(svg);
+        }
+        svg.setAttribute('width', w);
+        svg.setAttribute('height', h + 16);
+        svg.setAttribute('viewBox', `0 0 ${w} ${h + 16}`);
+        svg.innerHTML = bubbleSurfaceMarkup(w, h, side, fill, outline, fontSize, ctx);
+      }
+
+      function paintAllBubbles() {
+        els.stage.querySelectorAll('.node').forEach(paintBubble);
+      }
+
+      const crownIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18h18l1.2-9.5-4.7 3.4L12 4l-5.5 7.9L1.8 8.5Z" fill="currentColor"/><path d="M4 21h16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
+
+      function clean(val) {
+        return String(val || '').toUpperCase().replace(/[^A-Z]/g, '');
+      }
+
+      function currentPuzzle() { return puzzles[state.active]; }
+      function nodeById(puzzle, id) { return puzzle.nodes.find(n => n.id === id); }
+      function answerNodes(puzzle) { return puzzle.nodes.filter(n => n.type === 'answer'); }
+
+      function isSolved(puzzle, node) {
+        return node.type === 'clue' || node.type === 'given' || node.type === 'queen' || state.solved[puzzle.id].has(node.id);
+      }
+
+      function isUnlocked(puzzle, node) {
+        if (node.type !== 'answer') return true;
+        if (!node.parents || node.parents.length === 0) return true;
+        return node.parents.every(pid => isSolved(puzzle, nodeById(puzzle, pid)));
+      }
+
+      function boardComplete(puzzle) {
+        return state.solved[puzzle.id].size === answerNodes(puzzle).length;
+      }
+
+      function queenLine(laughs, complete) {
+        if (complete) return 'HA HA HA!';
+        if (laughs >= 2) return 'A chuckle…';
+        if (laughs === 1) return 'A smirk…';
+        return 'Amuse me.';
+      }
+
+      function formatTime(ms) {
+        const totalSecs = Math.floor(ms / 1000);
+        return Math.floor(totalSecs / 60) + ':' + String(totalSecs % 60).padStart(2, '0');
+      }
+
+      function switchBoard(next) {
+        state.active = (next + puzzles.length) % puzzles.length;
+        prepareRound();
+        render();
+        createPicker();
+      }
+
+      function createPicker() {
+        els.picker.innerHTML = puzzles.map((puzzle, idx) => {
+          const solved = boardComplete(puzzle);
+          return `
+            <button class="board-token${solved ? ' is-solved' : ''}" type="button" role="tab"
+              aria-selected="${idx === state.active}" data-tab="${idx}"
+              aria-label="Board ${idx + 1}: ${puzzle.title}${solved ? ' (solved)' : ''}">
+              ${solved ? '✓' : idx + 1}
+            </button>
+          `;
+        }).join('');
+
+        els.picker.querySelectorAll('[data-tab]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const next = Number(btn.dataset.tab);
+            if (next !== state.active) switchBoard(next);
+          });
+        });
+      }
+
+      function renderLaughMeter(puzzle) {
+        const total = answerNodes(puzzle).length;
+        const laughs = state.solved[puzzle.id].size;
+        els.laughMeter.innerHTML = Array.from({ length: total }, (_, i) =>
+          `<span class="laugh-pip${i < laughs ? ' lit' : ''}">${crownIcon}</span>`
+        ).join('');
+        els.laughMeter.setAttribute('aria-label', `${laughs} of ${total} laughs`);
+      }
+
+      function createNode(puzzle, node, index) {
+        const solved = isSolved(puzzle, node);
+        const unlocked = isUnlocked(puzzle, node);
+        const laughs = state.solved[puzzle.id].size;
+        const complete = boardComplete(puzzle);
+
+        const nodeEl = document.createElement('div');
+        // Clues speak toward their advisor (left / right / straight down); the player's
+        // bubbles always speak toward the player, who stands on one side.
+        const tailSide = node.type === 'answer'
+          ? (node.x > 55 ? 'right' : 'left')
+          : node.x < 45 ? 'left' : node.x > 55 ? 'right' : 'center';
+        nodeEl.className = `node ${node.type} avatar-${tailSide}${solved && node.type === 'answer' ? ' solved' : ''}${!unlocked ? ' locked' : ''}${complete && node.type === 'queen' ? ' heard' : ''}`;
+        nodeEl.dataset.node = node.id;
+        nodeEl.dataset.tail = node.type === 'queen' ? 'left' : tailSide;
+        nodeEl.dataset.ctx = 'avatar-adjacent';
+        nodeEl.dataset.font = node.type === 'clue' || node.type === 'given' ? 14 : 18;
+        nodeEl.style.setProperty('--x', node.x);
+        nodeEl.style.setProperty('--y', node.type === 'queen' ? QUEEN_Y : node.y);
+
+        if (node.type === 'queen') {
+          nodeEl.innerHTML = `
+            ${queenMascot(complete)}
+            <span class="queen-line">${queenLine(laughs, complete)}</span>
+          `;
+          return nodeEl;
+        }
+
+        if (node.type === 'clue' || node.type === 'given') {
+          nodeEl.innerHTML = `
+            <span class="clue-word">${node.text}</span>
+            ${advisorAvatar(index)}
+          `;
+          return nodeEl;
+        }
+
+        if (solved) {
+          nodeEl.innerHTML = `
+            <span class="said">${node.answer}</span>
+            ${meAvatar()}
+          `;
+          return nodeEl;
+        }
+
+        const value = state.values[puzzle.id][node.id] || '';
+        const chars = Array.from({ length: node.answer.length }, (_, i) => {
+          const char = value[i] || '';
+          const isActive = i === value.length;
+          return `<span class="cell${isActive ? ' active-cell' : ''}">${char}</span>`;
+        }).join('');
+
+        nodeEl.innerHTML = `
+          <div class="cells" aria-hidden="true">${chars}</div>
+          <input class="node-input" aria-label="Answer with ${node.answer.length} letters" value="${value}" maxlength="${node.answer.length}" autocomplete="off" autocapitalize="characters" spellcheck="false" ${!unlocked || round.phase !== 'running' ? 'disabled' : ''}>
+          ${unlocked ? meAvatar() : ''}
+        `;
+
+        nodeEl.addEventListener('click', () => nodeEl.querySelector('input:not(:disabled)')?.focus());
+
+        const input = nodeEl.querySelector('input');
+        input.addEventListener('input', e => handleInput(e, puzzle, node, nodeEl));
+        input.addEventListener('keydown', e => {
+          if (e.key === 'Enter') checkAnswer(puzzle, node, nodeEl, clean(input.value));
+        });
+        return nodeEl;
+      }
+
+      function handleInput(event, puzzle, node, nodeEl) {
+        if (!acceptingAnswers()) return;
+        const val = clean(event.target.value).slice(0, node.answer.length);
+        event.target.value = val;
+        state.values[puzzle.id][node.id] = val;
+
+        nodeEl.querySelectorAll('.cell').forEach((c, idx) => {
+          c.textContent = val[idx] || '';
+          c.classList.toggle('active-cell', idx === val.length);
+        });
+        nodeEl.classList.remove('wrong');
+
+        if (val === node.answer) {
+          checkAnswer(puzzle, node, nodeEl, val);
+        } else if (val.length === node.answer.length) {
+          nodeEl.classList.add('wrong');
+          paintBubble(nodeEl);
+          setMessage(`“${val}” doesn’t join both clues. Try another word.`, 'warn');
+          window.setTimeout(() => { nodeEl.classList.remove('wrong'); paintBubble(nodeEl); }, 300);
+        }
+      }
+
+      function checkAnswer(puzzle, node, nodeEl, val) {
+        if (!acceptingAnswers() || !isUnlocked(puzzle, node) || val !== node.answer || state.solved[puzzle.id].has(node.id)) return;
+        state.solved[puzzle.id].add(node.id);
+        state.values[puzzle.id][node.id] = node.answer;
+        const complete = boardComplete(puzzle);
+
+        state.message = complete ? `The Queen laughs! ${node.joke}` : `${node.answer}! ${node.joke}`;
+        state.tone = complete ? 'success' : '';
+
+        if (complete) finishRound();
+        render();
+        if (complete) {
+          createPicker();
+          celebrate();
+        } else {
+          els.stage.querySelector('input:not(:disabled)')?.focus({ preventScroll: true });
+        }
+      }
+
+      function setMessage(msg, tone = '') {
+        state.message = msg;
+        state.tone = tone;
+        els.herald.textContent = msg;
+        els.herald.className = 'herald' + (tone ? ' ' + tone : '');
+      }
+
+      function render() {
+        const puzzle = currentPuzzle();
+        els.title.textContent = puzzle.title;
+        els.herald.textContent = state.message;
+        els.herald.className = 'herald' + (state.tone ? ' ' + state.tone : '');
+        els.stage.classList.toggle('is-won', boardComplete(puzzle));
+
+        renderLaughMeter(puzzle);
+        els.stage.querySelectorAll('.node, .stage-flash').forEach(n => n.remove());
+        puzzle.nodes.forEach((node, idx) => els.stage.appendChild(createNode(puzzle, node, idx)));
+
+        updateTimerUI();
+        lockStageHeight();
+        scheduleWireRedraw();
+      }
+
+      // The court keeps the height it had at the start of the round, so the tree
+      // does not jump when the share card appears below it after the win.
+      function lockStageHeight() {
+        if (round.phase === 'won') return;
+        els.stage.style.height = '';
+        const h = els.stage.getBoundingClientRect().height;
+        if (h > 0) els.stage.style.height = h + 'px';
+      }
+
+      let wireFrame = 0;
+      function scheduleWireRedraw() {
+        cancelAnimationFrame(wireFrame);
+        wireFrame = requestAnimationFrame(drawWires);
+      }
+
+      function drawWires() {
+        paintAllBubbles();
+        const puzzle = currentPuzzle();
+        const canvas = els.canvas;
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.round(rect.width * dpr);
+        canvas.height = Math.round(rect.height * dpr);
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+        ctx.lineCap = 'round';
+
+        puzzle.nodes.forEach(child => {
+          if (!child.parents) return;
+          const childEl = els.stage.querySelector(`[data-node="${child.id}"]`);
+          if (!childEl) return;
+          const childRect = childEl.getBoundingClientRect();
+
+          child.parents.forEach(parentId => {
+            const parent = nodeById(puzzle, parentId);
+            const parentEl = els.stage.querySelector(`[data-node="${parentId}"]`);
+            if (!parentEl) return;
+            const parentRect = parentEl.getBoundingClientRect();
+
+            const startX = parentRect.left - rect.left + parentRect.width / 2;
+            const endX = childRect.left - rect.left + childRect.width / 2;
+            const goesDown = childRect.top + childRect.height / 2 >= parentRect.top + parentRect.height / 2;
+            const startY = goesDown ? parentRect.bottom - rect.top : parentRect.top - rect.top;
+            const endY = goesDown ? childRect.top - rect.top : childRect.bottom - rect.top;
+            const deltaY = endY - startY;
+            const controlY = startY + Math.sign(deltaY || 1) * Math.max(18, Math.abs(deltaY) * 0.55);
+            const active = isSolved(puzzle, parent);
+            const toQueen = child.type === 'queen';
+
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.bezierCurveTo(startX, controlY, endX, controlY, endX, endY);
+            ctx.setLineDash(active ? [] : [4, 6]);
+            ctx.strokeStyle = toQueen ? (active ? '#E5A818' : 'rgba(60, 81, 156, 0.22)') : (active ? '#9488F2' : '#D8E2F8');
+            ctx.lineWidth = toQueen && active ? 3.5 : (active ? 2.8 : 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            if (active) {
+              const midY = 0.125 * startY + 0.75 * controlY + 0.125 * endY;
+              const midX = (startX + endX) / 2;
+              ctx.beginPath();
+              ctx.arc(midX, midY, 5, 0, Math.PI * 2);
+              ctx.fillStyle = toQueen ? '#E5A818' : '#9488F2';
+              ctx.fill();
+              ctx.beginPath();
+              ctx.arc(midX, midY, 2.2, 0, Math.PI * 2);
+              ctx.fillStyle = '#FFFFFF';
+              ctx.fill();
+            }
+          });
+        });
+      }
+
+      function hint() {
+        if (!acceptingAnswers()) return;
+        if (round.hintsLeft <= 0) {
+          setMessage('No hints left on this board.', 'warn');
+          return;
+        }
+        const puzzle = currentPuzzle();
+        const target = answerNodes(puzzle).find(n => !state.solved[puzzle.id].has(n.id) && isUnlocked(puzzle, n));
+        if (!target) {
+          setMessage('Solve the open bubbles first.');
+          return;
+        }
+
+        round.hintsLeft--;
+        round.penaltyMs += 10000;
+        round.elapsedMs = (Date.now() - round.startTime) + round.penaltyMs;
+        showPenaltyToast('+10s');
+
+        const currentVal = state.values[puzzle.id][target.id] || '';
+        const nextLetterIdx = Math.min(currentVal.length, target.answer.length - 1);
+        const nextVal = target.answer.slice(0, nextLetterIdx + 1);
+        state.values[puzzle.id][target.id] = nextVal;
+
+        const letter = nextVal[nextVal.length - 1];
+        setMessage(`Hint: the next letter is “${letter}”. ${round.hintsLeft} hint${round.hintsLeft === 1 ? '' : 's'} left, +10s on the clock.`);
+        render();
+
+        if (nextVal === target.answer) {
+          const nodeEl = els.stage.querySelector(`[data-node="${target.id}"]`);
+          checkAnswer(puzzle, target, nodeEl, nextVal);
+        } else {
+          const input = els.stage.querySelector(`[data-node="${target.id}"] input`);
+          input?.focus();
+          input?.setSelectionRange(nextVal.length, nextVal.length);
+        }
+      }
+
+      function showPenaltyToast(text) {
+        const toast = document.createElement('div');
+        toast.className = 'penalty-toast';
+        toast.textContent = text;
+        els.timerChip.appendChild(toast);
+        els.timerChip.classList.add('penalty-flash');
+        setTimeout(() => {
+          toast.remove();
+          els.timerChip.classList.remove('penalty-flash');
+        }, 1100);
+      }
+
+      function celebrate() {
+        const colors = ['#F6D772', '#29C5B2', '#FFFFFF', '#EC9ABF', '#F6D772', '#9488F2'];
+        for (let i = 0; i < 16; i++) {
+          const spark = document.createElement('i');
+          spark.className = 'stage-flash';
+          spark.style.left = `${34 + Math.random() * 32}%`;
+          spark.style.top = `${9 + Math.random() * 6}%`;
+          spark.style.background = colors[i % colors.length];
+          spark.style.setProperty('--dx', `${(Math.random() - 0.5) * 220}px`);
+          spark.style.setProperty('--dy', `${120 + Math.random() * 220}px`);
+          spark.style.animationDelay = `${i * 28}ms`;
+          els.stage.appendChild(spark);
+          window.setTimeout(() => spark.remove(), 1700);
+        }
+      }
+
+      function prepareRound() {
+        els.share.hidden = true;
+        els.shareFeedback.textContent = '';
+        clearInterval(round.interval);
+        Object.assign(round, { phase: 'ready', startTime: 0, elapsedMs: 0, penaltyMs: 0, hintsLeft: TOTAL_HINTS, interval: null });
+        const p = currentPuzzle();
+        state.solved[p.id].clear();
+        state.values[p.id] = {};
+        state.message = READY_MESSAGE;
+        state.tone = '';
+      }
+
+      function startRound() {
+        if (round.phase === 'running') return;
+        prepareRound();
+        round.phase = 'running';
+        round.startTime = Date.now();
+        state.message = 'Tap the open bubble and type the word that joins its two clues.';
+        state.tone = '';
+        round.interval = setInterval(tick, 100);
+        render();
+        createPicker();
+        els.stage.querySelector('input:not(:disabled)')?.focus({ preventScroll: true });
+      }
+
+      function acceptingAnswers() { return round.phase === 'running'; }
+
+      function tick() {
+        if (round.phase !== 'running') return;
+        round.elapsedMs = (Date.now() - round.startTime) + round.penaltyMs;
+        updateTimerUI();
+      }
+
+      function finishRound() {
+        clearInterval(round.interval);
+        round.interval = null;
+        round.phase = 'won';
+        renderShareResults();
+      }
+
+      function updateTimerUI() {
+        const timeStr = formatTime(round.elapsedMs);
+        els.timer.textContent = timeStr;
+        els.timer.setAttribute('aria-label', Math.floor(round.elapsedMs / 1000) + ' seconds elapsed');
+
+        els.hintCount.textContent = round.hintsLeft;
+        const running = round.phase === 'running';
+        const won = round.phase === 'won';
+
+        els.hint.disabled = !running || round.hintsLeft <= 0;
+        els.cover.hidden = running || won;
+        els.hud.hidden = won;
+        els.herald.hidden = won;
+        els.winPanel.hidden = !won;
+        if (won) {
+          const used = TOTAL_HINTS - round.hintsLeft;
+          els.winStats.textContent = `Solved in ${timeStr}` + (used ? ` · ${used} hint${used > 1 ? 's' : ''}` : ' · no hints');
+        }
+      }
+
+      function shareBoardLayout() {
+        const puzzle = currentPuzzle();
+        const width = els.stage.clientWidth;
+        const height = els.stage.clientHeight;
+        return {
+          width,
+          height,
+          nodes: puzzle.nodes.map(node => {
+            const el = els.stage.querySelector('[data-node="' + node.id + '"]');
+            return {
+              x: el.offsetLeft / width,
+              y: (el.offsetTop + el.offsetHeight / 2) / height,
+              w: el.offsetWidth / width,
+              h: el.offsetHeight / height,
+              kind: node.type === 'queen' ? 'queen' : node.type === 'answer' ? 'answer' : 'clue',
+              letters: node.type === 'queen' ? 0 : clean(node.answer || node.text).length,
+              solved: state.solved[puzzle.id].has(node.id),
+              parents: (node.parents || []).map(id => puzzle.nodes.findIndex(n => n.id === id))
+            };
+          })
+        };
+      }
+
+      function renderShareResults() {
+        const elapsedSecs = Math.floor(round.elapsedMs / 1000);
+        const summary = Object.freeze({
+          solved: state.solved[currentPuzzle().id].size,
+          total: answerNodes(currentPuzzle()).length,
+          board: state.active + 1,
+          finished: round.phase === 'won',
+          elapsedSecs,
+          hintsUsed: TOTAL_HINTS - round.hintsLeft,
+          layout: shareBoardLayout()
+        });
+
+        els.share.hidden = false;
+        const canvas = document.getElementById('share-board');
+        const nativeBtn = document.querySelector('[data-share-native="board"]');
+        nativeBtn.hidden = true;
+        const draw = () => drawRoyalShare(canvas, summary);
+        draw();
+        document.fonts?.ready.then(draw);
+
+        canvas.toBlob(blob => {
+          if (!blob) return;
+          const file = new File([blob], 'tell-the-queen-board-' + summary.board + '.png', { type: 'image/png' });
+          nativeBtn.hidden = !(navigator.canShare?.({ files: [file] }) && navigator.share);
+        }, 'image/png');
+      }
+
+      document.querySelectorAll('[data-share-download]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const canvas = document.getElementById('share-board');
+          canvas.toBlob(blob => {
+            if (!blob) return;
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'tell-the-queen-board-' + (state.active + 1) + '.png';
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            els.shareFeedback.textContent = 'Image saved.';
+          }, 'image/png');
+        });
+      });
+
+      document.querySelectorAll('[data-share-native]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const canvas = document.getElementById('share-board');
+          canvas.toBlob(async blob => {
+            if (!blob) return;
+            const file = new File([blob], 'tell-the-queen-board-' + (state.active + 1) + '.png', { type: 'image/png' });
+            try {
+              await navigator.share({ files: [file], title: 'Tell the Queen result' });
+            } catch (err) {
+              if (err.name !== 'AbortError') els.shareFeedback.textContent = 'Sharing unavailable here. Use Save image instead.';
+            }
+          }, 'image/png');
+        });
+      });
+
+      els.coverStart.addEventListener('click', startRound);
+      els.hint.addEventListener('click', hint);
+      els.reset.addEventListener('click', () => { prepareRound(); render(); createPicker(); });
+      els.headerBack.addEventListener('click', () => switchBoard(state.active - 1));
+      els.winNext.addEventListener('click', () => switchBoard(state.active + 1));
+      els.winShare.addEventListener('click', () => els.share.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+
+      window.addEventListener('resize', () => { lockStageHeight(); scheduleWireRedraw(); });
+      new ResizeObserver(scheduleWireRedraw).observe(els.stage);
+      document.fonts?.ready.then(scheduleWireRedraw);
+
+      createPicker();
+      render();
+    })();
+  </script>
+</body>
+</html>
