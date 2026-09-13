@@ -424,7 +424,7 @@
     /* Stage: full-bleed court */
     .stage {
       position: relative;
-      flex: 1 1 auto;
+      flex: 1 0 auto;
       min-height: 500px;
       background: linear-gradient(180deg, var(--bg) 0%, var(--floor) 100%);
       overflow: hidden;
@@ -534,7 +534,15 @@
       justify-content: center;
       z-index: 10;
     }
+    .node.answer.row-answer {
+      min-width: 0;
+      max-width: calc(50% - 20px);
+      padding-inline: 10px;
+    }
+    .row-answer .cells { min-width: 0; gap: 3px; }
+    .row-answer .cell { flex-shrink: 1; min-width: 0; font-size: clamp(14px, 4.2vw, 17px); }
     .node.answer:focus-within {
+      z-index: 20;
       transform: translate(-50%, -50%) scale(1.04);
     }
     .node.answer:focus-within .bubble-surface {
@@ -617,6 +625,7 @@
       height: 100%;
       border-radius: 999px;
       opacity: 0.001;
+      font-size: 16px;
       border: none;
       outline: none;
       cursor: pointer;
@@ -791,10 +800,13 @@
 
     /* Real phones: no fake chrome, fill the viewport */
     @media (max-width: 480px) {
-      body { padding: 0; background: var(--bg); justify-content: flex-start; }
+      body { padding: 0; background: var(--bg); justify-content: flex-start; overflow: hidden; }
       .device-wrapper { max-width: 100%; }
       .phone-frame {
-        height: 100svh;
+        position: fixed;
+        top: var(--visible-top, 0px);
+        left: 0;
+        height: var(--visible-height, 100svh);
         max-height: none;
         border: none;
         border-radius: 0;
@@ -1419,6 +1431,10 @@
           ? (node.x > 55 ? 'right' : 'left')
           : node.x < 45 ? 'left' : node.x > 55 ? 'right' : 'center';
         nodeEl.className = `node ${node.type} avatar-${tailSide}${solved && node.type === 'answer' ? ' solved' : ''}${!unlocked ? ' locked' : ''}${complete && node.type === 'queen' ? ' heard' : ''}`;
+        if (node.type === 'answer' && puzzle.nodes.some(other =>
+          other !== node && other.y === node.y)) {
+          nodeEl.classList.add('row-answer');
+        }
         nodeEl.dataset.node = node.id;
         nodeEl.dataset.tail = node.type === 'queen' ? 'left' : tailSide;
         nodeEl.dataset.ctx = 'avatar-adjacent';
@@ -1463,7 +1479,7 @@
           ${unlocked ? meAvatar() : ''}
         `;
 
-        nodeEl.addEventListener('click', () => nodeEl.querySelector('input:not(:disabled)')?.focus());
+        nodeEl.addEventListener('click', () => nodeEl.querySelector('input:not(:disabled)')?.focus({ preventScroll: true }));
 
         const input = nodeEl.querySelector('input');
         input.addEventListener('input', e => handleInput(e, puzzle, node, nodeEl));
@@ -1539,8 +1555,14 @@
 
       // The court keeps the height it had at the start of the round, so the tree
       // does not jump when the share card appears below it after the win.
+      let stageWidth = 0;
       function lockStageHeight() {
         if (round.phase === 'won') return;
+        // A keyboard resize must scroll the court, not squeeze its rows together.
+        const width = els.stage.clientWidth;
+        if (round.phase === 'running' &&
+            width === stageWidth && els.stage.style.height) return;
+        stageWidth = width;
         els.stage.style.height = '';
         const h = els.stage.getBoundingClientRect().height;
         if (h > 0) els.stage.style.height = h + 'px';
@@ -1552,7 +1574,40 @@
         wireFrame = requestAnimationFrame(drawWires);
       }
 
+      // Preserve each board's intended positions unless bubbles would overlap or clip.
+      function spaceNodeRows() {
+        const width = els.stage.clientWidth;
+        const margin = 12;
+        const gap = 16;
+        const rows = new Map();
+        currentPuzzle().nodes.forEach(node => {
+          if (node.type === 'queen') return;
+          const el = els.stage.querySelector(`[data-node="${node.id}"]`);
+          const half = el.offsetWidth / 2;
+          const item = { el, half, x: Math.max(margin + half,
+            Math.min(width - margin - half, width * node.x / 100)) };
+          if (!rows.has(node.y)) rows.set(node.y, []);
+          rows.get(node.y).push(item);
+        });
+        rows.forEach(row => {
+          row.sort((a, b) => a.x - b.x);
+          // Every current board has at most two bubbles on the same row.
+          if (row.length === 2) {
+            const [left, right] = row;
+            const overlap = left.x + left.half + gap - (right.x - right.half);
+            if (overlap > 0) {
+              left.x = Math.max(margin + left.half, left.x - overlap / 2);
+              right.x = Math.min(width - margin - right.half,
+                Math.max(right.x, left.x + left.half + gap + right.half));
+              left.x = Math.min(left.x, right.x - right.half - gap - left.half);
+            }
+          }
+          row.forEach(({ el, x }) => el.style.setProperty('--x', x / width * 100));
+        });
+      }
+
       function drawWires() {
+        spaceNodeRows();
         paintAllBubbles();
         const puzzle = currentPuzzle();
         const canvas = els.canvas;
@@ -1643,7 +1698,7 @@
           checkAnswer(puzzle, target, nodeEl, nextVal);
         } else {
           const input = els.stage.querySelector(`[data-node="${target.id}"] input`);
-          input?.focus();
+          input?.focus({ preventScroll: true });
           input?.setSelectionRange(nextVal.length, nextVal.length);
         }
       }
@@ -1824,7 +1879,38 @@
       els.winNext.addEventListener('click', () => switchBoard(state.active + 1));
       els.winShare.addEventListener('click', () => els.share.scrollIntoView({ behavior: 'smooth', block: 'start' }));
 
-      window.addEventListener('resize', () => { lockStageHeight(); scheduleWireRedraw(); });
+      const screen = document.getElementById('phone-screen');
+      const viewport = window.visualViewport;
+      let viewportFrame = 0;
+      function keepAnswerVisible() {
+        cancelAnimationFrame(viewportFrame);
+        viewportFrame = requestAnimationFrame(() => {
+          const top = viewport?.offsetTop || 0;
+          const height = viewport?.height || window.innerHeight;
+          document.documentElement.style.setProperty('--visible-height', `${height}px`);
+          document.documentElement.style.setProperty('--visible-top', `${top}px`);
+          const input = document.activeElement;
+          if (!input?.matches('.node-input')) return;
+          const bounds = input.closest('.node').getBoundingClientRect();
+          const frame = screen.getBoundingClientRect();
+          const visibleTop = Math.max(top, frame.top) + 20;
+          const visibleBottom = Math.min(top + height, frame.bottom) - 24;
+          if (bounds.bottom > visibleBottom) {
+            screen.scrollTop += bounds.bottom - visibleBottom;
+          } else if (bounds.top < visibleTop) {
+            screen.scrollTop -= visibleTop - bounds.top;
+          }
+        });
+      }
+      screen.addEventListener('focusin', keepAnswerVisible);
+      viewport?.addEventListener('resize', keepAnswerVisible);
+      viewport?.addEventListener('scroll', keepAnswerVisible);
+      window.addEventListener('resize', () => {
+        lockStageHeight();
+        scheduleWireRedraw();
+        keepAnswerVisible();
+      });
+      keepAnswerVisible();
       new ResizeObserver(scheduleWireRedraw).observe(els.stage);
       document.fonts?.ready.then(scheduleWireRedraw);
 
